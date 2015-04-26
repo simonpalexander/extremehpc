@@ -10,30 +10,29 @@
 
 #include "tgaUtils.h"
 
-/*
- * ToDo:
- * 1) Pack the read in image data into an integer for each pixel. One byte for
- * each colour component, with the fourth byte (essentially alpha, being ignored.
- * 1.1) Unpack BGR chars to RGBA into an int. - use bit shifting.
- * 1.2) Pack RGBA int into an BGA chars
- * 2) Define the image processing map.
- * 3) Define the assumption on how image boundaries are processed.
- * 4) Apply map to image.
- */
+//Done Pack the read in image data into an integer for each pixel. One byte for each colour component, with the fourth byte (essentially alpha, being ignored.
+//Done Unpack BGR chars to RGBA into an int. - use bit shifting.
+//Done Pack RGBA int into an BGA chars
+//ToDo Integrate data read and unpacking in same function.
+//ToDo Integrate date pack and write in same function.
+//ToDo Define the image processing map.
+//ToDo Define the assumption on how image boundaries are processed.
+//ToDo Apply map to image.
+
 
 int main(int argc, char **argv)
 {
 	// n6822_big.tga, wood.tga
-	char* inputFilename = "resources/wood.tga";
+	char* inputFilename = "resources/n6822_big.tga";
 	TgaImage* tgaImage = readTGAFile(inputFilename);
 
-	unpackImageData(tgaImage);
-	packImageData(tgaImage);
+	//unpackImageData(tgaImage);
+	//packImageData(tgaImage);
 
 	char* outputFilename = "resources/output.tga";
 	saveTGAImage(outputFilename, tgaImage);
 
-	free(tgaImage->image);
+	free(tgaImage->imageData);
 	free(tgaImage);
 
 	return 0;

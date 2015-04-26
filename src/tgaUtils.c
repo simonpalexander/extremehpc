@@ -57,7 +57,6 @@ TgaImage* readTGAFile(char* filename)
 	TgaImage* tgaImage = (TgaImage*) malloc(sizeof(TgaImage));
 
 	FILE *data = fopen(filename, "rb");
-
 	/*
 	 * Read the first 18 bytes of the file.
 	 * This contains the header information.
@@ -74,11 +73,42 @@ TgaImage* readTGAFile(char* filename)
 	int totalNumberOfBytes = tgaImage->pixelSize * tgaImage->numOfPixels;
 	printf("Total number of Bytes: %d\n", totalNumberOfBytes);
 
-	tgaImage->image = (unsigned char *) malloc(totalNumberOfBytes * sizeof(unsigned char));
-	fread(tgaImage->image, totalNumberOfBytes, 1, data);
+	printf("Reading TGA image data.\n");
+	unsigned char* imageDataBuffer = (unsigned char *) malloc(totalNumberOfBytes * sizeof(unsigned char));
+	fread(imageDataBuffer, totalNumberOfBytes, 1, data);
+	printf("TGA image data read.\n");
 
 	fclose(data);
-	printf("\nTGA image read.\n");
+
+	printf("Unpacking Image Data.\n");
+
+	tgaImage->imageData = (int*) malloc(tgaImage->numOfPixels * sizeof(int));
+
+	unsigned char* imageDataBufferPtr = imageDataBuffer;
+	int* imageDataPixelPtr = tgaImage->imageData;;
+
+	unsigned char redComponent, greenComponent, blueComponent;
+
+	int pixelIdx;
+	for (pixelIdx = 0 ; pixelIdx < tgaImage->numOfPixels ; pixelIdx++) {
+
+		// Remember TGA pixels pack colour components in the format BGR.
+		blueComponent = *imageDataBufferPtr;
+		imageDataBufferPtr++;
+		greenComponent = *imageDataBufferPtr;
+		imageDataBufferPtr++;
+		redComponent = *imageDataBufferPtr;
+		imageDataBufferPtr++;
+
+		// Pack in format RGBA
+		*imageDataPixelPtr = ((int) redComponent) + ((int)(greenComponent) << 8) + ((int)(blueComponent) << 16);
+		imageDataPixelPtr++;
+	}
+	printf("Unpacked Image Data.\n");
+
+	free(imageDataBuffer);
+
+	printf("TFA image file read.\n");
 	return(tgaImage);
 }
 
@@ -87,98 +117,45 @@ TgaImage* readTGAFile(char* filename)
 void saveTGAImage(char* filename, TgaImage* tgaImage)
 {
 	printf("\nSaving TGA image file: %s\n", filename);
-
-	FILE *data;
-
-	data = fopen(filename, "wb");
-	fwrite(tgaImage->header, 18, 1, data);
+	printf("Packing Image Data.\n");
 
 	int totalNumberOfBytes = tgaImage->pixelSize * tgaImage->numOfPixels;
-	fwrite(tgaImage->image, totalNumberOfBytes, 1, data);
+	unsigned char* imageDataBuffer = (unsigned char *) malloc(totalNumberOfBytes * sizeof(unsigned char));
 
+	unsigned char* imageDataBufferPtr = imageDataBuffer;
+	int* imageDataPixelPtr = tgaImage->imageData;;
+
+	int pixelIdx;
+	for (pixelIdx = 0 ; pixelIdx < tgaImage->numOfPixels ; pixelIdx++)
+	{
+		// Blue Component
+		*imageDataBufferPtr = (unsigned char) (*imageDataPixelPtr >> 16);
+		imageDataBufferPtr++;
+
+		// Green Component
+		*imageDataBufferPtr = (unsigned char) (*imageDataPixelPtr >> 8);
+		imageDataBufferPtr++;
+
+		// Red Component
+		*imageDataBufferPtr = (unsigned char) (*imageDataPixelPtr);
+		imageDataBufferPtr++;
+
+		imageDataPixelPtr++;
+	}
+
+	printf("Packed Image Data.\n");
+
+	FILE *data = fopen(filename, "wb");
+	fwrite(tgaImage->header, 18, 1, data);
+	fwrite(imageDataBuffer, totalNumberOfBytes, 1, data);
 	fclose(data);
+
+	free(imageDataBuffer);
+
 	printf("TGA image written.\n");
 }
 
 /*---------------------------------------------------------------------------*/
-
-void unpackImageData(TgaImage* tgaImage)
-{
-	printf("\nUnpacking Image Data.\n");
-
-	tgaImage->unpackedImage = (int*) malloc(tgaImage->numOfPixels * sizeof(int));
-
-	unsigned char* imagePixelPtr;
-	int* unpackedImagePixelPtr;
-
-	unsigned char redComponent, greenComponent, blueComponent;
-	int unpackedPixel;
-
-	imagePixelPtr = tgaImage->image;
-	unpackedImagePixelPtr = tgaImage->unpackedImage;
-
-	int pixelIdx;
-	for (pixelIdx = 0 ; pixelIdx < tgaImage->numOfPixels ; pixelIdx++) {
-
-		// Remember TGA pixels pack colour components
-		// in the format BGR.
-		blueComponent = *imagePixelPtr;
-		imagePixelPtr++;
-		greenComponent = *imagePixelPtr;
-		imagePixelPtr++;
-		redComponent = *imagePixelPtr;
-		imagePixelPtr++;
-
-		// Pack in format RGBA
-		unpackedPixel = ((int) redComponent) + ((int)(greenComponent) << 8) + ((int)(blueComponent) << 16);
-		*unpackedImagePixelPtr = unpackedPixel;
-
-		unpackedImagePixelPtr++;
-	}
-
-	free(tgaImage->image);
-
-	printf("\nUnpacked Image Data.\n");
-}
-
-/*---------------------------------------------------------------------------*/
-
-void packImageData(TgaImage* tgaImage)
-{
-	printf("\nPacking Image Data.\n");
-
-	tgaImage->image = (unsigned char*) malloc(tgaImage->pixelSize * tgaImage->numOfPixels * sizeof(unsigned char));
-
-	unsigned char* imagePixelPtr;
-	int* unpackedImagePixelPtr;
-
-	unsigned char redComponent, greenComponent, blueComponent;
-
-	imagePixelPtr = tgaImage->image;
-	unpackedImagePixelPtr = tgaImage->unpackedImage;
-
-	int pixelIdx;
-	for (pixelIdx = 0 ; pixelIdx < tgaImage->numOfPixels ; pixelIdx++) {
-
-		blueComponent = (unsigned char) (*unpackedImagePixelPtr >> 16);
-		*imagePixelPtr = blueComponent;
-		imagePixelPtr++;
-
-		greenComponent = (unsigned char) (*unpackedImagePixelPtr >> 8);
-		*imagePixelPtr = greenComponent;
-		imagePixelPtr++;
-
-		redComponent = (unsigned char) (*unpackedImagePixelPtr);
-		*imagePixelPtr = redComponent;
-		imagePixelPtr++;
-
-		unpackedImagePixelPtr++;
-	}
-
-	free(tgaImage->unpackedImage);
-
-	printf("\nPacked Image Data.\n");
-}
 
 
 
