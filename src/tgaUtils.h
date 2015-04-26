@@ -14,14 +14,11 @@ typedef struct tga_image_structure	{
 	int numOfPixels;
 	int pixelSize;
 	unsigned char header[18];
-	//unsigned char* image;
 	int* imageData; } TgaImage;
 
 void tgaImageProperties(TgaImage* tgaImage);
 TgaImage* readTGAFile(char* filename);
 void saveTGAImage(char* filename, TgaImage* tgaImage);
-
-//void unpackImageData(TgaImage* tgaImage);
-//void packImageData(TgaImage* tgaImage);
+void cleanUpTgaImage(TgaImage* tgaImage);
 
 #endif /* SRC_TGAUTILS_H_ */

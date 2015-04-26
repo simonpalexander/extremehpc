@@ -48,7 +48,7 @@ void tgaImageProperties(TgaImage* tgaImage)
 	printf("- - - - - - - - - - - - - - - - - - -\n");
 }
 
-/*---------------------------------------------------------------------------*/
+//-----------------------------------------------------------------------------
 
 TgaImage* readTGAFile(char* filename)
 {
@@ -74,7 +74,7 @@ TgaImage* readTGAFile(char* filename)
 	printf("Total number of Bytes: %d\n", totalNumberOfBytes);
 
 	printf("Reading TGA image data.\n");
-	unsigned char* imageDataBuffer = (unsigned char *) malloc(totalNumberOfBytes * sizeof(unsigned char));
+	unsigned char* imageDataBuffer = (unsigned char*) malloc(totalNumberOfBytes * sizeof(unsigned char));
 	fread(imageDataBuffer, totalNumberOfBytes, 1, data);
 	printf("TGA image data read.\n");
 
@@ -112,7 +112,7 @@ TgaImage* readTGAFile(char* filename)
 	return(tgaImage);
 }
 
-/*---------------------------------------------------------------------------*/
+//-----------------------------------------------------------------------------
 
 void saveTGAImage(char* filename, TgaImage* tgaImage)
 {
@@ -120,7 +120,7 @@ void saveTGAImage(char* filename, TgaImage* tgaImage)
 	printf("Packing Image Data.\n");
 
 	int totalNumberOfBytes = tgaImage->pixelSize * tgaImage->numOfPixels;
-	unsigned char* imageDataBuffer = (unsigned char *) malloc(totalNumberOfBytes * sizeof(unsigned char));
+	unsigned char* imageDataBuffer = (unsigned char*) malloc(totalNumberOfBytes * sizeof(unsigned char));
 
 	unsigned char* imageDataBufferPtr = imageDataBuffer;
 	int* imageDataPixelPtr = tgaImage->imageData;;
@@ -155,7 +155,12 @@ void saveTGAImage(char* filename, TgaImage* tgaImage)
 	printf("TGA image written.\n");
 }
 
-/*---------------------------------------------------------------------------*/
+//-----------------------------------------------------------------------------
 
+void cleanUpTgaImage(TgaImage* tgaImage)
+{
+	free(tgaImage->imageData);
+	free(tgaImage);
+}
 
 
