@@ -18,7 +18,7 @@ typedef struct tga_image_structure	{
 
 void tgaImageProperties(TgaImage* tgaImage);
 TgaImage* readTGAFile(char* filename);
-void saveTGAImage(char* filename, TgaImage* tgaImage);
+int saveTGAImage(char* filename, TgaImage* tgaImage);
 void cleanUpTgaImage(TgaImage* tgaImage);
 
 #endif /* SRC_TGAUTILS_H_ */

@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "globalDefines.h"
 #include "tgaUtils.h"
 
 void tgaImageProperties(TgaImage* tgaImage)
@@ -56,12 +57,18 @@ TgaImage* readTGAFile(char* filename)
 
 	TgaImage* tgaImage = (TgaImage*) malloc(sizeof(TgaImage));
 
-	FILE *data = fopen(filename, "rb");
+	FILE *filePtr = fopen(filename, "rb");
+	if (!filePtr)
+	{
+		printf("ERROR: Problem opening TGA image file to read: %s\n", filename);
+		return NULL;
+	}
+
 	/*
 	 * Read the first 18 bytes of the file.
 	 * This contains the header information.
 	 */
-	fread(tgaImage->header, 18, 1, data);
+	fread(tgaImage->header, 18, 1, filePtr);
 
 	tgaImage->width = (int) ((tgaImage->header[13] << 8) + tgaImage->header[12]);
 	tgaImage->height = (int) ((tgaImage->header[15] << 8) + tgaImage->header[14]);
@@ -75,10 +82,10 @@ TgaImage* readTGAFile(char* filename)
 
 	printf("Reading TGA image data.\n");
 	unsigned char* imageDataBuffer = (unsigned char*) malloc(totalNumberOfBytes * sizeof(unsigned char));
-	fread(imageDataBuffer, totalNumberOfBytes, 1, data);
+	fread(imageDataBuffer, totalNumberOfBytes, 1, filePtr);
 	printf("TGA image data read.\n");
 
-	fclose(data);
+	fclose(filePtr);
 
 	printf("Unpacking Image Data.\n");
 
@@ -114,7 +121,7 @@ TgaImage* readTGAFile(char* filename)
 
 //-----------------------------------------------------------------------------
 
-void saveTGAImage(char* filename, TgaImage* tgaImage)
+int saveTGAImage(char* filename, TgaImage* tgaImage)
 {
 	printf("\nSaving TGA image file: %s\n", filename);
 	printf("Packing Image Data.\n");
@@ -145,14 +152,21 @@ void saveTGAImage(char* filename, TgaImage* tgaImage)
 
 	printf("Packed Image Data.\n");
 
-	FILE *data = fopen(filename, "wb");
-	fwrite(tgaImage->header, 18, 1, data);
-	fwrite(imageDataBuffer, totalNumberOfBytes, 1, data);
-	fclose(data);
+	FILE *filePtr = fopen(filename, "wb");
+	if (!filePtr)
+	{
+		printf("ERROR: Problem opening TGA image file to write: %s\n", filename);
+		return FAIL;
+	}
+
+	fwrite(tgaImage->header, 18, 1, filePtr);
+	fwrite(imageDataBuffer, totalNumberOfBytes, 1, filePtr);
+	fclose(filePtr);
 
 	free(imageDataBuffer);
 
 	printf("TGA image written.\n");
+	return SUCCESS;
 }
 
 //-----------------------------------------------------------------------------

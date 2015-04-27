@@ -10,6 +10,8 @@
 
 #include "globalDefines.h"
 #include "tgaUtils.h"
+
+#include "proprtiesFileUtils.h"
 #include "spatialFilterUtils.h"
 
 //Done Pack the read in image data into an integer for each pixel. One byte for each colour component, with the fourth byte (essentially alpha, being ignored.
@@ -17,11 +19,12 @@
 //Done Pack RGBA int into an BGA chars
 //Done Integrate data read and unpacking in same function.
 //Done Integrate data packing and write in same function.
-//ToDo Define the image processing spatial filter.
+//Done Define the image processing spatial filter.
+//Done Define image processing spatial filter in a configuration or properties file. File needs to end with a blank new line.
 //ToDo Consider defining an image processing buffer - a subset of the image data - to apply spatial filter over.
 //ToDo Define the assumption on how image boundaries are processed.
 //ToDo Apply spatial filter to image.
-//ToDo Define image processing spatial filter in a configuration or properties file.
+//ToDo Add timing utilities.
 
 SpatialFilter* setupSpatialFilter(int size);
 
@@ -30,18 +33,23 @@ int main(int argc, char **argv)
 	// n6822_big.tga, wood.tga
 	char* inputFilename = "resources/n6822_big.tga";
 	TgaImage* tgaImage = readTGAFile(inputFilename);
-
-	SpatialFilter* spatialFilter = setupSpatialFilter(3);
-	if (!spatialFilter) {
-		printf("ERROR: Failed to setup spatial filter.\n");
-		printf("ERROR: Exiting Program.\n");
+	if (!tgaImage) {
+		printf("ERROR: Exiting program.\n");
 		return FAIL;
 	}
 
-	printSpatialFilter(spatialFilter);
+	char* spatialFilterFilename = "resources/spatialFilter.txt";
+	SpatialFilter* spatialFilter = readSpatialFilterProprtyFile(spatialFilterFilename);
+	if (!spatialFilter) {
+		printf("ERROR: Exiting program.\n");
+		return FAIL;
+	}
 
 	char* outputFilename = "resources/output.tga";
-	saveTGAImage(outputFilename, tgaImage);
+	if (!successful(saveTGAImage(outputFilename, tgaImage))) {
+		printf("ERROR: Exiting program.\n");
+		return FAIL;
+	}
 
 	cleanUpTgaImage(tgaImage);
 	cleanUpSpatialFilter(spatialFilter);
@@ -54,8 +62,8 @@ int main(int argc, char **argv)
 
 SpatialFilter* setupSpatialFilter(int size)
 {
-	SpatialFilter* spatialFilter = createSpatialFilter(size);
-
+	//SpatialFilter* spatialFilter = createSpatialFilter(size);
+/*
 	if (!successful(setFilterElement(spatialFilter, 0, 0, -1))) {
 		printf("ERROR: Failed to set filter element (0,0).\n");
 		return NULL;
@@ -101,5 +109,6 @@ SpatialFilter* setupSpatialFilter(int size)
 		return NULL;
 	}
 
-	return spatialFilter;
+	return spatialFilter;*/
+	return NULL;
 }

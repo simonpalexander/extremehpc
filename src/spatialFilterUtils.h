@@ -11,11 +11,11 @@
 // Assume a square filter;
 typedef struct spatial_filter_structure	{
 	int size;
-	int* filter; } SpatialFilter;
+	float* filter; } SpatialFilter;
 
-SpatialFilter* createSpatialFilter(int size);
+SpatialFilter* createSpatialFilter(int size, float* numArray);
 void cleanUpSpatialFilter(SpatialFilter* spatialFilter);
-int setFilterElement(SpatialFilter* spatialFilter, int row, int col, int value);
+int setFilterElement(SpatialFilter* spatialFilter, int row, int col, float value);
 void printSpatialFilter(SpatialFilter* spatialFilter);
 
 #endif /* SRC_SPATIALFILTERUTILS_H_ */
