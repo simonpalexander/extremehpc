@@ -21,8 +21,8 @@
 //Done Integrate data packing and write in same function.
 //Done Define the image processing spatial filter.
 //Done Define image processing spatial filter in a configuration or properties file. File needs to end with a blank new line.
+//Done Define the assumption on how image boundaries are processed. Will follow an 'extend' approach
 //ToDo Consider defining an image processing buffer - a subset of the image data - to apply spatial filter over.
-//ToDo Define the assumption on how image boundaries are processed.
 //ToDo Apply spatial filter to image.
 //ToDo Add timing utilities.
 
