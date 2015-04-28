@@ -96,9 +96,8 @@ TgaImage* readTGAFile(char* filename)
 
 	unsigned char redComponent, greenComponent, blueComponent;
 
-	int pixelIdx;
-	for (pixelIdx = 0 ; pixelIdx < tgaImage->numOfPixels ; pixelIdx++) {
-
+	int pixelIndex;
+	for (pixelIndex = 0 ; pixelIndex < tgaImage->numOfPixels ; pixelIndex++) {
 		// Remember TGA pixels pack colour components in the format BGR.
 		blueComponent = *imageDataBufferPtr;
 		imageDataBufferPtr++;
@@ -124,6 +123,13 @@ TgaImage* readTGAFile(char* filename)
 int saveTGAImage(char* filename, TgaImage* tgaImage)
 {
 	printf("\nSaving TGA image file: %s\n", filename);
+
+	printf("General:\n");
+	printf("\tWidth: %d\n", tgaImage->width);
+	printf("\tHeight: %d:\n", tgaImage->height);
+	printf("\tNum of Pixels: %d:\n", tgaImage->numOfPixels);
+	printf("\tBytes per Pixel: %d\n", tgaImage->pixelSize);
+
 	printf("Packing Image Data.\n");
 
 	int totalNumberOfBytes = tgaImage->pixelSize * tgaImage->numOfPixels;
@@ -132,8 +138,8 @@ int saveTGAImage(char* filename, TgaImage* tgaImage)
 	unsigned char* imageDataBufferPtr = imageDataBuffer;
 	int* imageDataPixelPtr = tgaImage->imageData;;
 
-	int pixelIdx;
-	for (pixelIdx = 0 ; pixelIdx < tgaImage->numOfPixels ; pixelIdx++)
+	int pixelIndex;
+	for (pixelIndex = 0 ; pixelIndex < tgaImage->numOfPixels ; pixelIndex++)
 	{
 		// Blue Component
 		*imageDataBufferPtr = (unsigned char) (*imageDataPixelPtr >> 16);
@@ -177,4 +183,55 @@ void cleanUpTgaImage(TgaImage* tgaImage)
 	free(tgaImage);
 }
 
+//-----------------------------------------------------------------------------
 
+// Remember index will be from:
+// Column: 0 to (column-1)
+// Row: 0 to (width-1)
+int getTgaImageElementValue(TgaImage* tgaImage, int columnIndex, int rowIndex)
+{
+	int elementIndex = rowIndex * tgaImage->width + columnIndex;
+
+	return *(tgaImage->imageData + elementIndex);
+}
+
+//-----------------------------------------------------------------------------
+
+void printTgaImageDataValues(TgaImage* tgaImage)
+{
+	printf("Print tga image data values.\n");
+
+	int columnIndex, rowIndex;
+	int* elementIndexPtr = tgaImage->imageData;
+	for (rowIndex = 0 ; rowIndex < tgaImage->height ; rowIndex++)
+	{
+		for (columnIndex = 0 ; columnIndex < tgaImage->width ; columnIndex++)
+		{
+			printf("%d  ", *elementIndexPtr);
+			elementIndexPtr++;
+		}
+		printf("\n");
+	}
+}
+
+//-----------------------------------------------------------------------------
+
+TgaImage* createTgaImage(TgaImage *tgaImage)
+{
+	TgaImage* newTgaImage = (TgaImage*) malloc(sizeof(TgaImage));
+
+	newTgaImage->width = tgaImage->width;
+	newTgaImage->height = tgaImage->height;
+	newTgaImage->numOfPixels = tgaImage->numOfPixels;
+	newTgaImage->pixelSize = tgaImage->pixelSize;
+
+	int index;
+	for (index=0 ; index<18 ; index++)
+	{
+		newTgaImage->header[index] = tgaImage->header[index];
+	}
+
+	newTgaImage->imageData = (int*) malloc(tgaImage->numOfPixels * sizeof(int));
+
+	return newTgaImage;
+}

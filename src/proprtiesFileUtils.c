@@ -25,25 +25,25 @@ SpatialFilter* readSpatialFilterProprtyFile(char* filename)
 
 	float num = 0;
 	int size = -1;
-	int numIdx = 0;
+	float scalar;
+	int numIndex = 0;
 
 	fscanf (filePtr, "%d", &size);
 
 	float* numArray = (float*) malloc(size * size * sizeof(float));
 
-	printf("Size: %d\n", size);
+	fscanf (filePtr, "%f", &scalar);
 	fscanf (filePtr, "%f", &num);
 	while (!feof(filePtr))
 	{
-		printf ("%d: %f ", numIdx, num);
-		numArray[numIdx] = num;
+		numArray[numIndex] = num;
 		fscanf (filePtr, "%f", &num);
-		numIdx++;
+		numIndex++;
 	}
 
 	fclose(filePtr);
 
-	SpatialFilter* spatialFilter = createSpatialFilter(size, numArray);
+	SpatialFilter* spatialFilter = createSpatialFilter(size, scalar, numArray);
 	if (!spatialFilter) {
 		printf("ERROR: Failed to read spatial filter: %s\n", filename);
 		return NULL;
@@ -51,7 +51,7 @@ SpatialFilter* readSpatialFilterProprtyFile(char* filename)
 
 	printSpatialFilter(spatialFilter);
 
-	printf("Spatial Filter property file read.");
+	printf("Spatial Filter property file read.\n");
 
 	return spatialFilter;
 }

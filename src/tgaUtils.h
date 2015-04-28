@@ -20,5 +20,10 @@ void tgaImageProperties(TgaImage* tgaImage);
 TgaImage* readTGAFile(char* filename);
 int saveTGAImage(char* filename, TgaImage* tgaImage);
 void cleanUpTgaImage(TgaImage* tgaImage);
+int getTgaImageElementValue(TgaImage* tgaImage, int columnIndex, int rowIndex);
+
+void printTgaImageDataValues(TgaImage* tgaImage);
+
+TgaImage* createTgaImage(TgaImage *tgaImage);
 
 #endif /* SRC_TGAUTILS_H_ */

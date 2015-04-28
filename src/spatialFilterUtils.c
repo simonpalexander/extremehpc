@@ -11,19 +11,21 @@
 #include "globalDefines.h"
 #include "spatialFilterUtils.h"
 
-SpatialFilter* createSpatialFilter(int size, float* numArray)
+SpatialFilter* createSpatialFilter(int size, float scalar, float* numArray)
 {
 	SpatialFilter* spatialFilter = (SpatialFilter*) malloc(sizeof(SpatialFilter));
 
 	spatialFilter->size = size;
+	spatialFilter->scalar = scalar;
+	spatialFilter->requiredImageEdgeExtend = (int) size/2;
 	spatialFilter->filter = (float*) malloc(size * size * sizeof(float));
 
 	int numberOfElements = size * size;
 
-	int idx;
-	for (idx=0 ; idx<numberOfElements ; idx++)
+	int index;
+	for (index=0 ; index<numberOfElements ; index++)
 	{
-		spatialFilter->filter[idx] = numArray[idx];
+		spatialFilter->filter[index] = numArray[index];
 	}
 
 	return spatialFilter;
@@ -69,7 +71,12 @@ int setFilterElement(SpatialFilter* spatialFilter, int row, int col, float value
 void printSpatialFilter(SpatialFilter* spatialFilter)
 {
 	printf("\n--- Spatial Filter: ---\n");
-	printf("Size: [%d by %d]\n", spatialFilter->size, spatialFilter->size);
+	printf("Size: %d by %d\n", spatialFilter->size, spatialFilter->size);
+	printf("Scalar: %f\n", spatialFilter->scalar);
+	printf("Required Edge Extend: %d\n", spatialFilter->requiredImageEdgeExtend);
+
+	printf("Filter:\n");
+
 	int row, col;
 	for (row = 0; row<spatialFilter->size ; row++)
 	{
