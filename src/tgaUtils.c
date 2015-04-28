@@ -39,7 +39,7 @@ void tgaImageProperties(TgaImage* tgaImage)
 
 	printf("Image Pixel Size: %d\n", tgaImage->header[16]);
 	printf("Image Descriptor Byte: %d\n", tgaImage->header[17]);
-	printf("Image Identification Field: %d\n", tgaImage->header[18]);
+	//printf("Image Identification Field: %d\n", tgaImage->header[18]);
 
 	printf("General:\n");
 	printf("\tWidth: %d\n", tgaImage->width);
@@ -130,6 +130,38 @@ int saveTGAImage(char* filename, TgaImage* tgaImage)
 	printf("\tNum of Pixels: %d:\n", tgaImage->numOfPixels);
 	printf("\tBytes per Pixel: %d\n", tgaImage->pixelSize);
 
+	printf("Defining header info:\n");
+
+	//- - - - - - - - - - - - - - - - - - - - - - - - - - -
+	// Assuming TGA Image DATA TYPE 2: Unmapped RGB images.
+
+	// Number of Characters in Identification Field.
+	// A value of 0 means that no Image.
+	tgaImage->header[0] = 0;
+
+	// Color Map Type.
+	// 0 means no color map  is included.
+	tgaImage->header[1] = 0;
+
+	tgaImage->header[2] = 2;
+
+	tgaImage->header[12] = tgaImage->width;
+	tgaImage->header[13] = tgaImage->width >> 8;
+	tgaImage->header[14] = tgaImage->height;
+	tgaImage->header[15] = tgaImage->height >> 8;
+
+	// Image Pixel Size.
+	// Number of bits in a pixel. This is 24 for Targa 24.
+	tgaImage->header[16] = tgaImage->pixelSize * 8;
+
+	printf("Number of Characters in Identification Field: %d\n", tgaImage->header[0]);
+	printf("Colour Map Type: %d\n", tgaImage->header[1]);
+	printf("Image Type Code: %d\n", tgaImage->header[2]);
+	printf("Image Specification:\n");
+	printf("\tWidth of Image: (lo-hi) %d %d\n", tgaImage->header[12],tgaImage->header[13]);
+	printf("\tHeight of Image: (lo-hi) %d %d\n", tgaImage->header[14],tgaImage->header[15]);
+	printf("Image Pixel Size: %d\n", tgaImage->header[16]);
+
 	printf("Packing Image Data.\n");
 
 	int totalNumberOfBytes = tgaImage->pixelSize * tgaImage->numOfPixels;
@@ -216,22 +248,22 @@ void printTgaImageDataValues(TgaImage* tgaImage)
 
 //-----------------------------------------------------------------------------
 
-TgaImage* createTgaImage(TgaImage *tgaImage)
+TgaImage* createTgaImage(int width, int height, int pixelSize)
 {
-	TgaImage* newTgaImage = (TgaImage*) malloc(sizeof(TgaImage));
+	TgaImage* tgaImage = (TgaImage*) malloc(sizeof(TgaImage));
 
-	newTgaImage->width = tgaImage->width;
-	newTgaImage->height = tgaImage->height;
-	newTgaImage->numOfPixels = tgaImage->numOfPixels;
-	newTgaImage->pixelSize = tgaImage->pixelSize;
+	tgaImage->width = width;
+	tgaImage->height = height;
+	tgaImage->numOfPixels = width * height;
+	tgaImage->pixelSize = pixelSize;
 
 	int index;
 	for (index=0 ; index<18 ; index++)
 	{
-		newTgaImage->header[index] = tgaImage->header[index];
+		tgaImage->header[index] = 0;
 	}
 
-	newTgaImage->imageData = (int*) malloc(tgaImage->numOfPixels * sizeof(int));
+	tgaImage->imageData = (int*) malloc(tgaImage->numOfPixels * sizeof(int));
 
-	return newTgaImage;
+	return tgaImage;
 }

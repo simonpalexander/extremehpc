@@ -263,11 +263,13 @@ int applySpatialFilterToImageStrComponentArray(SpatialFilter* spatialFilter, Ima
 
 //-----------------------------------------------------------------------------
 
-TgaImage* createTgaImageFromImageStr(ImageStr* imageStr, TgaImage* tgaImage)
+TgaImage* createTgaImageFromImageStr(ImageStr* imageStr)
 {
 	printf("Creating TgaImage from ImageStr\n");
 
-	TgaImage* newTgaImage = createTgaImage(tgaImage);
+	int tgaImageWidth = imageStr->width - (2 * imageStr->rowExtend);
+	int tgaImageHeight = imageStr->height - (2 * imageStr->columnExtend);
+	TgaImage* newTgaImage = createTgaImage(tgaImageWidth, tgaImageHeight, 3);
 
 	int rowIndex, columnIndex;
 	int dataArrayIndex;
@@ -317,7 +319,7 @@ TgaImage* createTgaImageFromImageStr(ImageStr* imageStr, TgaImage* tgaImage)
 				blueComponent = 255;
 			}
 
-			dataArrayIndex = ((rowIndex - imageStr->rowExtend) * tgaImage->width) + (columnIndex - imageStr->columnExtend);
+			dataArrayIndex = ((rowIndex - imageStr->rowExtend) * tgaImageWidth) + (columnIndex - imageStr->columnExtend);
 			*(newTgaImage->imageData + dataArrayIndex) = ((int) redComponent) + ((int)(greenComponent) << 8) + ((int)(blueComponent) << 16);
 		}
 	}
@@ -329,3 +331,10 @@ TgaImage* createTgaImageFromImageStr(ImageStr* imageStr, TgaImage* tgaImage)
 
 //-----------------------------------------------------------------------------
 
+void cleanUpImageStr(ImageStr* imageStr)
+{
+	free(imageStr->redDataArray);
+	free(imageStr->greenDataArray);
+	free(imageStr->blueDataArray);
+	free(imageStr);
+}

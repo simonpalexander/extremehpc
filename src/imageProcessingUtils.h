@@ -31,9 +31,10 @@ typedef struct image_structure	{
 
 ImageStr* createImageStrFromTgaImageForSpatialFilter(TgaImage* tgaImage, SpatialFilter* spatialFilter);
 ImageStr* createImageStr(ImageStr* imageStr);
-TgaImage* createTgaImageFromImageStr(ImageStr* imageStr, TgaImage* tgaImage);
+TgaImage* createTgaImageFromImageStr(ImageStr* imageStr);
 void printImageStrDataValues(ImageStr* imageStr);
 int applySpatialFilterToImageStrComponentArray(SpatialFilter* spatialFilter, ImageStr* imageStr, ImageStr* processedImageStr, int component);
 void setComponentValues(ImageStr* imageStr, int dataArrayIndex, int dataArrayValue);
+void cleanUpImageStr(ImageStr* imageStr);
 
 #endif /* SRC_IMAGEPROCESSINGUTILS_H_ */

@@ -24,6 +24,6 @@ int getTgaImageElementValue(TgaImage* tgaImage, int columnIndex, int rowIndex);
 
 void printTgaImageDataValues(TgaImage* tgaImage);
 
-TgaImage* createTgaImage(TgaImage *tgaImage);
+TgaImage* createTgaImage(int width, int height, int pixelSize);
 
 #endif /* SRC_TGAUTILS_H_ */
