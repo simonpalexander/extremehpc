@@ -7,8 +7,8 @@ all:  mainExtremeHPC
 #read_24bit_tga_file: src/read_24bit_tga_file.c src/tgaUtils.c
 #	gcc -o read_24bit_tga_file src/read_24bit_tga_file.c src/tgaUtils.c -I.
 
-mainExtremeHPC: src/mainExtremeHPC.c src/tgaUtils.c src/spatialFilterUtils.c src/proprtiesFileUtils.c src/imageProcessingUtils.c 
-	gcc -o mainExtremeHPC src/mainExtremeHPC.c src/tgaUtils.c src/spatialFilterUtils.c src/proprtiesFileUtils.c  src/imageProcessingUtils.c -I.
+mainExtremeHPC: src/mainExtremeHPC.c src/tgaUtils.c src/spatialFilterUtils.c src/proprtiesFileUtils.c src/imageProcessingUtils.c src/timingUtils.c
+	gcc -o mainExtremeHPC src/mainExtremeHPC.c src/tgaUtils.c src/spatialFilterUtils.c src/proprtiesFileUtils.c  src/imageProcessingUtils.c src/timingUtils.c -I.
 	 
 #extremehpc-hw6: src/extremehpc-hw6.c src/dummyFunctions.c
 #	gcc -fopenmp -o extremehpc-hw6 src/extremehpc-hw6.c src/dummyFunctions.c -I.

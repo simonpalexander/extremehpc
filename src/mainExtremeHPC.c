@@ -14,6 +14,7 @@
 #include "proprtiesFileUtils.h"
 #include "spatialFilterUtils.h"
 #include "imageProcessingUtils.h"
+#include "timingUtils.h"
 
 //Done Pack the read in image data into an integer for each pixel. One byte for each colour component, with the fourth byte (essentially alpha, being ignored.
 //Done Unpack BGR chars to RGBA into an int. - use bit shifting.
@@ -26,7 +27,7 @@
 //Done Consider defining an image processing buffer - a subset of the image data - to apply spatial filter over. Have decided not to implement this now unless needed.
 //Done Apply spatial filter to image.
 //Done Define simply command line argument parsing..
-//ToDo Add timing utilities.
+//Done Add timing utilities.
 
 // Ex: mainExtremeHPC.exe resources/wood.tga resources/spatialFilter.txt
 // Ex: n6822_big.tga, wood.tga, 080913.ike.poster
@@ -38,7 +39,11 @@ int processComandLineArguments(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
-	printf("INFOR: Starting Extreme HPC Project Program:\n");
+	printf("INFO : Starting Extreme HPC Project Program:\n");
+
+	TimeTracker* timeTracker = createTimeTracker("ExtremeHPC");
+
+	addTrackingPoint(timeTracker, "Start");
 
 	if (!successful(processComandLineArguments(argc, argv))) {
 		printf("ERROR: Exiting program.\n");
@@ -72,9 +77,14 @@ int main(int argc, char **argv)
 		return FAIL;
 	}
 
+	addTrackingPoint(timeTracker, "Loaded and Initialised");
+
 	applySpatialFilterToImageStrComponentArray(spatialFilter, imageStr, processedImageStr, red);
+	addTrackingPoint(timeTracker, "Red Processed");
 	applySpatialFilterToImageStrComponentArray(spatialFilter, imageStr, processedImageStr, green);
+	addTrackingPoint(timeTracker, "Green Processed");
 	applySpatialFilterToImageStrComponentArray(spatialFilter, imageStr, processedImageStr, blue);
+	addTrackingPoint(timeTracker, "Blue Processed");
 	//printImageStrDataValues(processedImageStr);
 	cleanUpImageStr(imageStr);
 
@@ -87,6 +97,11 @@ int main(int argc, char **argv)
 	cleanUpTgaImage(processedTgaImage);
 	cleanUpSpatialFilter(spatialFilter);
 	cleanUpImageStr(processedImageStr);
+
+	addTrackingPoint(timeTracker, "Saved and Cleaned up.");
+
+	printTimeTracker(timeTracker);
+	calculateInteral(timeTracker, 2, 5);
 
 	printf("Exiting Program.\n");
 	return SUCCESS;
