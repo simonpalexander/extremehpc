@@ -88,3 +88,21 @@ void printSpatialFilter(SpatialFilter* spatialFilter)
 	}
 	printf("-----------------------\n");
 }
+
+//-----------------------------------------------------------------------------
+
+void writeSpatialFilterToFile(SpatialFilter* spatialFilter, FILE* file)
+{
+	fprintf(file, "Size: %d\n", spatialFilter->size);
+	fprintf(file, "Scalar: %f\n", spatialFilter->scalar);
+
+	int row, col;
+	for (row = 0; row<spatialFilter->size ; row++)
+	{
+		for (col = 0; col<spatialFilter->size ; col++)
+		{
+			fprintf(file, "%g\t", spatialFilter->filter[row * spatialFilter->size + col]);
+		}
+		fprintf(file, "\n");
+	}
+}

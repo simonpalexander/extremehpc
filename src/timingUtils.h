@@ -8,6 +8,7 @@
 #ifndef SRC_TIMINGUTILS_H_
 #define SRC_TIMINGUTILS_H_
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
 
@@ -25,5 +26,7 @@ void calculateInteral(TimeTracker* timeTracker, int startIndex, int endIndex);
 float getInterval(TimeTracker* timeTracker, int intervalIndex);
 void printTimeTracker(TimeTracker* timeTracker);
 
+void writeTimeTrackerFile(TimeTracker* timeTracker, FILE* file);
+void writeTimeTrackerHeader(FILE* file);
 
 #endif /* SRC_TIMINGUTILS_H_ */

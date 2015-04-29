@@ -28,6 +28,8 @@
 //Done Apply spatial filter to image.
 //Done Define simply command line argument parsing..
 //Done Add timing utilities.
+//Done: Consider strategy where only data array relating to component being processed is malloc-ed minimizing amount of active memory use. My machine only has 8G, other machines will have more, consider if it becomes a problem.
+//Done: Write results to a text file.
 
 // Ex: mainExtremeHPC.exe resources/wood.tga resources/spatialFilter.txt
 // Ex: n6822_big.tga, wood.tga, 080913.ike.poster
@@ -41,9 +43,16 @@ int main(int argc, char **argv)
 {
 	printf("INFO : Starting Extreme HPC Project Program:\n");
 
-	TimeTracker* timeTracker = createTimeTracker("ExtremeHPC");
-
+	TimeTracker* timeTracker = createTimeTracker("TT1");
 	addTrackingPoint(timeTracker, "Start");
+
+	char filenameBase[256];
+	time_t now = time(NULL);
+	struct tm *t = localtime(&now);
+	strftime(filenameBase, sizeof(filenameBase)-1, "extremehpc-results-%Y%m%d-%H%M", t);
+	char resultsFilename[256];
+	snprintf(resultsFilename, sizeof(resultsFilename), "%s.txt", filenameBase);
+	printf("Results filename: %s\n", resultsFilename);
 
 	if (!successful(processComandLineArguments(argc, argv))) {
 		printf("ERROR: Exiting program.\n");
@@ -77,15 +86,21 @@ int main(int argc, char **argv)
 		return FAIL;
 	}
 
-	addTrackingPoint(timeTracker, "Loaded and Initialised");
+	addTrackingPoint(timeTracker, "Init");
+
+	TimeTracker* timeTracker2 = createTimeTracker("TT2");
+	addTrackingPoint(timeTracker2, "Start");
 
 	applySpatialFilterToImageStrComponentArray(spatialFilter, imageStr, processedImageStr, red);
-	addTrackingPoint(timeTracker, "Red Processed");
+	addTrackingPoint(timeTracker, "Red");
 	applySpatialFilterToImageStrComponentArray(spatialFilter, imageStr, processedImageStr, green);
-	addTrackingPoint(timeTracker, "Green Processed");
+	addTrackingPoint(timeTracker, "Green");
 	applySpatialFilterToImageStrComponentArray(spatialFilter, imageStr, processedImageStr, blue);
-	addTrackingPoint(timeTracker, "Blue Processed");
+	addTrackingPoint(timeTracker, "Blue");
 	//printImageStrDataValues(processedImageStr);
+
+	addTrackingPoint(timeTracker2, "End");
+
 	cleanUpImageStr(imageStr);
 
 	TgaImage* processedTgaImage = createTgaImageFromImageStr(processedImageStr);
@@ -94,14 +109,35 @@ int main(int argc, char **argv)
 		return FAIL;
 	}
 
-	cleanUpTgaImage(processedTgaImage);
-	cleanUpSpatialFilter(spatialFilter);
 	cleanUpImageStr(processedImageStr);
 
-	addTrackingPoint(timeTracker, "Saved and Cleaned up.");
-
+	addTrackingPoint(timeTracker, "End");
 	printTimeTracker(timeTracker);
-	calculateInteral(timeTracker, 2, 5);
+	printTimeTracker(timeTracker2);
+	//calculateInteral(timeTracker, 2, 5);
+
+	FILE *file = fopen(resultsFilename, "wt");
+	if (file == NULL)
+	{
+		printf("ERROR: Error opening results file: %s\n", resultsFilename);
+		return FAIL;
+	}
+	fprintf(file, "Input: %s\n", inputFilename);
+	fprintf(file, "Output: %s\n", outputFilename);
+	fprintf(file, "Image,%d,%d,%d\n", processedTgaImage->width, processedTgaImage->height,processedTgaImage->numOfPixels);
+
+	writeTimeTrackerHeader(file);
+	writeTimeTrackerFile(timeTracker, file);
+	writeTimeTrackerFile(timeTracker2, file);
+
+	fprintf(file, "SpatialFIlter: %s\n", spatialFilterFilename);
+	writeSpatialFilterToFile(spatialFilter, file);
+	fclose(file);
+
+	cleanUpTgaImage(processedTgaImage);
+	cleanUpSpatialFilter(spatialFilter);
+	free(timeTracker);
+	free(timeTracker2);
 
 	printf("Exiting Program.\n");
 	return SUCCESS;

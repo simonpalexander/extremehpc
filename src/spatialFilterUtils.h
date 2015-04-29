@@ -20,4 +20,6 @@ void cleanUpSpatialFilter(SpatialFilter* spatialFilter);
 int setFilterElement(SpatialFilter* spatialFilter, int row, int col, float value);
 void printSpatialFilter(SpatialFilter* spatialFilter);
 
+void writeSpatialFilterToFile(SpatialFilter* spatialFilter, FILE* file);
+
 #endif /* SRC_SPATIALFILTERUTILS_H_ */

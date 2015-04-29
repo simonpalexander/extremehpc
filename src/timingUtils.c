@@ -64,6 +64,7 @@ void calculateInteral(TimeTracker* timeTracker, int startIndex, int endIndex)
 float getInterval(TimeTracker* timeTracker, int intervalIndex)
 {
 	calculateInterals(timeTracker);
+
 	if (intervalIndex<=timeTracker->lastIndex)
 	{
 		return timeTracker->interval[intervalIndex];
@@ -86,3 +87,22 @@ void printTimeTracker(TimeTracker* timeTracker)
 	}
 }
 
+//-----------------------------------------------------------------------------
+
+void writeTimeTrackerHeader(FILE* file)
+{
+	fprintf(file,"Tracker,Label,Sec,Usec,Interval\n");
+}
+
+//-----------------------------------------------------------------------------
+
+void writeTimeTrackerFile(TimeTracker* timeTracker, FILE* file)
+{
+	calculateInterals(timeTracker);
+
+	int index;
+	for (index=0 ; index<timeTracker->lastIndex ; index++)
+	{
+		fprintf(file, "%s,%s,%d,%d,%f\n", timeTracker->trackerName, timeTracker->trackerPointLabel[index], (int)(timeTracker->trackerPointTiming[index]).tv_sec, (int)(timeTracker->trackerPointTiming[index]).tv_usec, timeTracker->interval[index]);
+	}
+}
