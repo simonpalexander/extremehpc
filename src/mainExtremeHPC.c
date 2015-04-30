@@ -31,8 +31,6 @@
 //Done: Consider strategy where only data array relating to component being processed is malloc-ed minimizing amount of active memory use. My machine only has 8G, other machines will have more, consider if it becomes a problem.
 //Done: Write results to a text file.
 
-// Ex: mainExtremeHPC.exe resources/wood.tga resources/spatialFilter.txt
-// Ex: n6822_big.tga, wood.tga, 080913.ike.poster
 char* inputFilename = "resources/input.tga";
 char* outputFilename = "resources/output.tga";
 char* spatialFilterFilename = "resources/spatialFilter.txt";
@@ -41,7 +39,7 @@ int processComandLineArguments(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
-	printf("INFO : Starting Extreme HPC Project Program:\n");
+	printf("INFO: Starting Extreme HPC Project Program:\n");
 
 	TimeTracker* timeTracker = createTimeTracker("TT1");
 	addTrackingPoint(timeTracker, "Start");
