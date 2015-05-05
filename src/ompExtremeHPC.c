@@ -40,10 +40,9 @@
 //Done Add timing utilities.
 //Done: Consider strategy where only data array relating to component being processed is malloc-ed minimizing amount of active memory use. My machine only has 8G, other machines will have more, consider if it becomes a problem.
 //Done: Write results to a text file.
-//ToDo: Add omp.
+//Done: Basic OMP functionality added to create a thread for each data array.
+//ToDo: Can further OMP optimization be added. On blue waters, each processor has 8/16 cores.
 
-// Ex: mainExtremeHPC.exe resources/wood.tga resources/spatialFilter.txt
-// Ex: n6822_big.tga, wood.tga, 080913.ike.poster
 char* inputFilename = "resources/input.tga";
 char* outputFilename = "resources/output.tga";
 char* spatialFilterFilename = "resources/spatialFilter.txt";
@@ -56,16 +55,15 @@ int main(int argc, char **argv)
 
 	char numThreadsStr[4];
 	int numOfThreads;
-	//int chunk = 10;
 
 	omp_set_num_threads(3);
 	#pragma omp parallel
 	{
 		#pragma omp master
 		{
-			int id = omp_get_thread_num();
+			int threadId = omp_get_thread_num();
 			numOfThreads = omp_get_num_threads();
-			printf( "OMP Settings: Num of Threads: %d\n", numOfThreads);
+			printf( "Thread %d: OMP Settings: Num of Threads: %d\n", threadId, numOfThreads);
 			sprintf(numThreadsStr, "%d", numOfThreads);
 		}
 	}
