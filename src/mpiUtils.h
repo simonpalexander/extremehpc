@@ -9,6 +9,7 @@
 #define SRC_MPIUTILS_H_
 
 #include "spatialFilterUtils.h"
+#include "imageProcessingUtils.h"
 
 void defineMpiDataTypes();
 void freeMpiDataTypes();
@@ -17,6 +18,9 @@ int mpiSendIsLog(int isLog, int srcNode);
 int mpiReceiveIsLog(int srcNode, int mpiRank);
 int mpiSendSpatialFilter(SpatialFilter* spatialFilter, int srcNode);
 SpatialFilter* mpiReceiveSpatialFilter(int srcNode, int mpiRank, int isLog);
+
+ImageStr* subDivideAndSendImageStr(ImageStr* imageStr, int numOfProcessors, int srcNode, int mpiRank, int isLog);
+
 
 void mpiPrintSpatialFilter(SpatialFilter* spatialFilter, int mpiRank);
 

@@ -103,6 +103,86 @@ SpatialFilter* mpiReceiveSpatialFilter(int srcNode, int mpiRank, int isLog)
 
 //-----------------------------------------------------------------------------
 
+ImageStr* subDivideAndSendImageStr(ImageStr* imageStr, int numOfProcessors, int srcNode, int mpiRank, int isLog)
+{
+	// Currently have the assumption that the number of rows in the image
+	// is equal or greater than the number of processors.
+	int sectionRowThickness = ((imageStr->height - (2 * imageStr->rowExtend)) / numOfProcessors) + 1;
+	int finalSectionRowThickness = (imageStr->height - (2 * imageStr->rowExtend)) - (sectionRowThickness * (numOfProcessors - 1) );
+	int sectionRowThicknessWithExtend = sectionRowThickness + (2 * imageStr->rowExtend);
+	int finalSectionRowThicknessWithExtend = finalSectionRowThickness + (2 * imageStr->rowExtend);
+
+	//if (isLog)
+	{
+		printf("INFO:(%d): SubDivide: Num of Processors: %d\n", mpiRank, numOfProcessors);
+		printf("INFO:(%d): SubDivide: Image Height: %d : Width %d\n", mpiRank, imageStr->height, imageStr->width);
+		printf("INFO:(%d): SubDivide: Rows from 0 to %d\n", mpiRank, imageStr->height - 1);
+		printf("INFO:(%d): SubDivide: Image Row Extend: %d\n", mpiRank, imageStr->rowExtend);
+		printf("INFO:(%d): SubDivide: Number of Elements: %d\n", mpiRank, (imageStr->width * imageStr->height));
+		printf("INFO:(%d): SubDivide: Section Row Thickness: %d : With Extend %d\n", mpiRank, sectionRowThickness, sectionRowThicknessWithExtend);
+		printf("INFO:(%d): SubDivide: Final Section Row Thickness: %d : With Extend %d\n", mpiRank, finalSectionRowThickness, finalSectionRowThicknessWithExtend);
+	}
+
+	int startRowIndex, fromRowIndex, toRowIndex, startElement, toElement;
+	int processorIndex;
+	for (processorIndex = 0 ; processorIndex < (numOfProcessors - 1) ; processorIndex++)
+	{
+		startRowIndex = processorIndex * sectionRowThickness + imageStr->rowExtend;
+		printf("INFO:(%d): SubDivide: Processor: %d : startRowIndex: %d\n", mpiRank, processorIndex, startRowIndex);
+		fromRowIndex = startRowIndex - imageStr->rowExtend;
+		toRowIndex = startRowIndex + sectionRowThickness + imageStr->rowExtend;
+		//toRowIndex = fromRowIndex + sectionRowThicknessWithExtend - 1;
+		printf("INFO:(%d): SubDivide: Including Extend: From %d to %d\n", mpiRank, fromRowIndex, toRowIndex);
+
+		startElement = fromRowIndex * imageStr->width;
+		toElement = (toRowIndex) * imageStr->width - 1;
+		printf("INFO:(%d): SubDivide: From Element: %d to %d\n", mpiRank, startElement, toElement);
+	}
+
+	startRowIndex = processorIndex * sectionRowThickness + imageStr->rowExtend;
+	printf("INFO:(%d): SubDivide: Processors: %d : startRowIndex: %d\n", mpiRank, processorIndex, startRowIndex);
+	fromRowIndex = startRowIndex - imageStr->rowExtend;
+	toRowIndex = startRowIndex + finalSectionRowThickness + imageStr->rowExtend;
+	//toRowIndex = fromRowIndex + finalSectionRowThicknessWithExtend - 1;
+	printf("INFO:(%d): SubDivide: Including Extend: From %d to %d\n", mpiRank, fromRowIndex, toRowIndex);
+
+	startElement = fromRowIndex * imageStr->width;
+	toElement = (toRowIndex) * imageStr->width - 1;
+	printf("INFO:(%d): SubDivide: From Element: %d to %d\n", mpiRank, startElement, toElement);
+
+	/*
+	for (rowIndex=imageStr->rowExtend ; rowIndex<rowEndIndex ; rowIndex++)
+	{
+		for (columnIndex=imageStr->columnExtend ; columnIndex<columnEndIndex ; columnIndex++)
+		{
+			filterElementPtr = spatialFilter->filter;
+			componentSum = 0.0f;
+
+			for (filterRowIndex=-filterRange ; filterRowIndex<=filterRange ; filterRowIndex++)
+			{
+				for (filterColumnIndex=-filterRange ; filterColumnIndex<=filterRange ; filterColumnIndex++)
+				{
+					dataArrayIndex = (rowIndex + filterRowIndex) * imageStr->width + (columnIndex + filterColumnIndex);
+					// Spatial Filter element: (filterColumnIndex, filterRowIndex)
+					elementValue = *(arrayPtr + dataArrayIndex);
+					componentSum += (*filterElementPtr) * elementValue;
+					filterElementPtr++;
+				}
+			}
+
+			dataArrayIndex = rowIndex * imageStr->width + columnIndex;
+			*(processedArrayPtr + dataArrayIndex) = spatialFilter->scalar * componentSum;
+		}
+	}
+	*/
+
+	ImageStr* subImageStr = (ImageStr*) malloc(sizeof(ImageStr));
+
+	return subImageStr;
+}
+
+//-----------------------------------------------------------------------------
+
 void mpiPrintSpatialFilter(SpatialFilter* spatialFilter, int mpiRank)
 {
 	printf("INFO:(%d): --- Spatial Filter: ---\n", mpiRank);
