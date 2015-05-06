@@ -5,7 +5,6 @@
  *      Author: simon
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 
 #include "globalDefines.h"
@@ -70,7 +69,7 @@ int setFilterElement(SpatialFilter* spatialFilter, int row, int col, float value
 
 void printSpatialFilter(SpatialFilter* spatialFilter)
 {
-	printf("\n--- Spatial Filter: ---\n");
+	printf("--- Spatial Filter: ---\n");
 	printf("Size: %d by %d\n", spatialFilter->size, spatialFilter->size);
 	printf("Scalar: %f\n", spatialFilter->scalar);
 	printf("Required Edge Extend: %d\n", spatialFilter->requiredImageEdgeExtend);
@@ -86,7 +85,6 @@ void printSpatialFilter(SpatialFilter* spatialFilter)
 		}
 		printf("\n");
 	}
-	printf("-----------------------\n");
 }
 
 //-----------------------------------------------------------------------------

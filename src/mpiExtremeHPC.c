@@ -19,6 +19,7 @@
 #include "spatialFilterUtils.h"
 #include "imageProcessingUtils.h"
 #include "timingUtils.h"
+#include "mpiUtils.h"
 
 //Done Pack the read in image data into an integer for each pixel. One byte for each colour component, with the fourth byte (essentially alpha, being ignored.
 //Done Unpack BGR chars to RGBA into an int. - use bit shifting.
@@ -52,6 +53,7 @@
 
 #define MPI_ROOT_NODE 0
 
+int isLog;
 char* inputFilename = "resources/input.tga";
 char* outputFilename = "resources/output.tga";
 char* spatialFilterFilename = "resources/spatialFilter.txt";
@@ -59,11 +61,7 @@ char* spatialFilterFilename = "resources/spatialFilter.txt";
 // MPI: Number of processes
 int mpiNumOfProcessors;
 
-const int mpiTag = 2;
-
-MPI_Datatype mpiSpatialFilterType;
-
-int processComandLineArguments(int argc, char **argv);
+int processComandLineArguments(int argc, char **argv, int mpiRank);
 
 int main(int argc, char **argv)
 {
@@ -72,26 +70,13 @@ int main(int argc, char **argv)
 	int mpiRank;
 	int mpiProvided;
 	MPI_Init_thread(&argc, &argv, MPI_THREAD_SINGLE, &mpiProvided);
-	// MPI_THREAD_MULTIPLE, MPI_THREAD_SINGLE
 
 	MPI_Comm_size(MPI_COMM_WORLD, &mpiNumOfProcessors);
 	MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
 
 	omp_set_num_threads(3);
 
-	// Setup MPI Spatial Filter Type.
-	const int numOfItems=3;
-	int blocklengths[3] = {1,1,1};
-	MPI_Datatype types[3] = {MPI_INT, MPI_INT, MPI_FLOAT};
-	MPI_Aint offsets[3];
-
-	offsets[0] = offsetof(SpatialFilter, size);
-	offsets[1] = offsetof(SpatialFilter, requiredImageEdgeExtend);
-	offsets[2] = offsetof(SpatialFilter, scalar);
-
-	MPI_Type_create_struct(numOfItems, blocklengths, offsets, types, &mpiSpatialFilterType);
-	MPI_Type_commit(&mpiSpatialFilterType);
-
+	defineMpiDataTypes();
 
 	if (mpiRank == MPI_ROOT_NODE)
 	{
@@ -107,7 +92,7 @@ int main(int argc, char **argv)
 			{
 				int threadId = omp_get_thread_num();
 				numOfThreads = omp_get_num_threads();
-				printf( "Thread %d: OMP Settings: Num of Threads: %d\n", threadId, numOfThreads);
+				printf( "INFO:(%d): Thread(%d): OMP Settings: Num of Threads: %d\n", mpiRank, threadId, numOfThreads);
 				sprintf(numThreadsStr, "%d", numOfThreads);
 			}
 		}
@@ -123,43 +108,48 @@ int main(int argc, char **argv)
 		snprintf(resultsFilename, sizeof(resultsFilename), "%s.txt", filenameBase);
 		printf("INFO:(%d): Results filename: %s\n", mpiRank, resultsFilename);
 
-		if (!successful(processComandLineArguments(argc, argv))) {
-			printf("INFO:(%d): ERROR: Exiting program.\n", mpiRank);
+		if (!successful(processComandLineArguments(argc, argv, mpiRank))) {
+			printf("ERROR:(%d): Exiting program.\n", mpiRank);
 			return FAIL;
 		}
 
+		mpiSendIsLog(isLog, MPI_ROOT_NODE);
+
 		TgaImage* tgaImage = readTGAFile(inputFilename);
 		if (!tgaImage) {
-			printf("INFO:(%d): ERROR: Exiting program.\n", mpiRank);
+			printf("ERROR:(%d): Exiting program.\n", mpiRank);
 			return FAIL;
 		}
 
 		SpatialFilter* spatialFilter = readSpatialFilterProprtyFile(spatialFilterFilename);
 		if (!spatialFilter) {
-			printf("INFO:(%d): ERROR: Exiting program.\n", mpiRank);
+			printf("ERROR:(%d): Exiting program.\n", mpiRank);
 			return FAIL;
+		}
+		if (isLog) {
+			mpiPrintSpatialFilter(spatialFilter, mpiRank);
 		}
 
 		ImageStr* imageStr = createImageStrFromTgaImageForSpatialFilter(tgaImage, spatialFilter);
 		if (!imageStr) {
-			printf("INFO:(%d): ERROR: Exiting program.\n", mpiRank);
+			printf("ERROR:(%d): Exiting program.\n", mpiRank);
 			return FAIL;
 		}
 		cleanUpTgaImage(tgaImage);
 
-		printf("INFO:(%d): size: %d\n", mpiRank, spatialFilter->size);
-		printf("INFO:(%d): requiredImageEdgeExtend: %d\n", mpiRank, spatialFilter->requiredImageEdgeExtend);
-		printf("INFO:(%d): scalar: %f\n", mpiRank, spatialFilter->scalar);
+		mpiSendSpatialFilter(spatialFilter, MPI_ROOT_NODE);
 
-		int processorIndex;
-		for (processorIndex=1 ; processorIndex<mpiNumOfProcessors ; processorIndex++) {
-			MPI_Send(spatialFilter, 1, mpiSpatialFilterType, processorIndex, mpiTag, MPI_COMM_WORLD);
-		}
+		// Sub-divide imageStr and send sub data arrays to processors.
 
-		/*
+		// Each processor processes its' sub data array.
+
+		// Each processor sends back its processed sub data array.
+
+		// A single processed data array is arranged on the root node.
+
 		ImageStr* processedImageStr = createImageStr(imageStr);
 		if (!processedImageStr) {
-			printf("INFO:(%d): ERROR: Exiting program.\n", mpiRank);
+			printf("ERROR:(%d): Exiting program.\n", mpiRank);
 			return FAIL;
 		}
 
@@ -177,9 +167,10 @@ int main(int argc, char **argv)
 
 		cleanUpImageStr(imageStr);
 
+		/*
 		TgaImage* processedTgaImage = createTgaImageFromImageStr(processedImageStr);
 		if (!successful(saveTGAImage(outputFilename, processedTgaImage))) {
-			printf("INFO:(%d): ERROR: Exiting program.\n"mpiRank, );
+			printf("ERROR:(%d): Exiting program.\n", mpiRank);
 			return FAIL;
 		}
 
@@ -191,11 +182,12 @@ int main(int argc, char **argv)
 		FILE *file = fopen(resultsFilename, "wt");
 		if (file == NULL)
 		{
-			printf("INFO:(%d): ERROR: Error opening results file: %s\n", mpiRank, resultsFilename);
+			printf("ERROR:(%d): Error opening results file: %s\n", mpiRank, resultsFilename);
 			return FAIL;
 		}
 
 		fprintf(file, "OMP: Num of Threads: %d\n", numOfThreads);
+		fprintf(file, "isLog: %d\n", isLog);
 		fprintf(file, "Input: %s\n", inputFilename);
 		fprintf(file, "Output: %s\n", outputFilename);
 		fprintf(file, "Image,%d,%d,%d\n", processedTgaImage->width, processedTgaImage->height,processedTgaImage->numOfPixels);
@@ -207,21 +199,16 @@ int main(int argc, char **argv)
 		writeSpatialFilterToFile(spatialFilter, file);
 		fclose(file);
 		*/
+
 		//cleanUpTgaImage(processedTgaImage);
 		cleanUpSpatialFilter(spatialFilter);
 		free(timeTracker);
 	}
 	else
 	{
-		MPI_Status status;
-		const int src = MPI_ROOT_NODE;
+		isLog = mpiReceiveIsLog(MPI_ROOT_NODE, mpiRank);
 
-		SpatialFilter* spatialFilter = (SpatialFilter*) malloc(sizeof(SpatialFilter));
-		MPI_Recv(spatialFilter, 1, mpiSpatialFilterType, src, mpiTag, MPI_COMM_WORLD, &status);
-
-		printf("INFO:(%d): size: %d\n", mpiRank, spatialFilter->size);
-		printf("INFO:(%d): requiredImageEdgeExtend: %d\n", mpiRank, spatialFilter->requiredImageEdgeExtend);
-		printf("INFO:(%d): scalar: %f\n", mpiRank, spatialFilter->scalar);
+		SpatialFilter* spatialFilter = mpiReceiveSpatialFilter(MPI_ROOT_NODE, mpiRank, isLog);
 
 		free(spatialFilter);
 	}
@@ -235,7 +222,8 @@ int main(int argc, char **argv)
 	}
 
 	// Free derived MPI data type.
-	MPI_Type_free(&mpiSpatialFilterType);
+	defineMpiDataTypes();
+	//MPI_Type_free(&mpiSpatialFilterType);
 	// Shutdown MPI
 	MPI_Finalize();
 
@@ -244,34 +232,43 @@ int main(int argc, char **argv)
 
 //-----------------------------------------------------------------------------
 
-int processComandLineArguments(int argc, char **argv) {
+int processComandLineArguments(int argc, char **argv, int mpiRank)
+{
 	if (argc == 2) {
-		inputFilename = argv[1];
+		isLog = atoi(argv[1]);
 	}
 	else if (argc == 3) {
-		inputFilename = argv[1];
-		spatialFilterFilename = argv[2];
+		isLog = atoi(argv[1]);
+		inputFilename = argv[2];
 	}
 	else if (argc == 4) {
-		inputFilename = argv[1];
-		spatialFilterFilename = argv[2];
-		outputFilename = argv[3];
+		isLog = atoi(argv[1]);
+		inputFilename = argv[2];
+		spatialFilterFilename = argv[3];
 	}
-	else if (argc>1 && argc > 4) {
-		printf("ERROR: Problem parsing command line arguments:\n");
-		printf("ERROR: 1) input filename : Default: resources/input.tga:\n");
-		printf("ERROR: 2) spatial filter filename : Default: resources/spatialFilter.txt:\n");
-		printf("ERROR: 3) output filename : Default: resources/output.tga:\n");
+	else if (argc == 5) {
+		isLog = atoi(argv[1]);
+		inputFilename = argv[2];
+		spatialFilterFilename = argv[3];
+		outputFilename = argv[4];
+	}
+	else if (argc>1 && argc > 5) {
+		printf("ERROR:(%d): Problem parsing command line arguments:\n", mpiRank);
+		printf("ERROR:(%d): 1) isLog: 0 false : 1 true\n", mpiRank);
+		printf("ERROR:(%d): 2) input filename : Default: resources/input.tga:\n", mpiRank);
+		printf("ERROR:(%d): 3) spatial filter filename : Default: resources/spatialFilter.txt:\n", mpiRank);
+		printf("ERROR:(%d): 4) output filename : Default: resources/output.tga:\n", mpiRank);
 		return FAIL;
 	}
 	else {
-		printf("The command line had no other arguments. Using defaults.\n");
+		printf("INFO:(%d): The command line had no other arguments. Using defaults.\n", mpiRank);
 	}
 
-	printf("Command Line Arguments:\n");
-	printf("Input: %s\n", inputFilename);
-	printf("Spatial Filter: %s\n", spatialFilterFilename);
-	printf("Output: %s\n", outputFilename);
+	printf("INFO:(%d): Command Line Arguments:\n", mpiRank);
+	printf("INFO:(%d): isLog: %d\n", mpiRank, isLog);
+	printf("INFO:(%d): Input: %s\n", mpiRank, inputFilename);
+	printf("INFO:(%d): Spatial Filter: %s\n", mpiRank, spatialFilterFilename);
+	printf("INFO:(%d): Output: %s\n", mpiRank, outputFilename);
 
 	return SUCCESS;
 }

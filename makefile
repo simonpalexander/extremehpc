@@ -13,8 +13,8 @@ mainExtremeHPC: src/mainExtremeHPC.c src/tgaUtils.c src/spatialFilterUtils.c src
 ompExtremeHPC: src/ompExtremeHPC.c src/tgaUtils.c src/spatialFilterUtils.c src/proprtiesFileUtils.c src/imageProcessingUtils.c src/timingUtils.c
 	gcc -O3 -fopenmp -o ompExtremeHPC src/ompExtremeHPC.c src/tgaUtils.c src/spatialFilterUtils.c src/proprtiesFileUtils.c  src/imageProcessingUtils.c src/timingUtils.c -I.
 
-mpiExtremeHPC: src/mpiExtremeHPC.c src/tgaUtils.c src/spatialFilterUtils.c src/proprtiesFileUtils.c src/imageProcessingUtils.c src/timingUtils.c
-	mpicc -O3 -fopenmp -o mpiExtremeHPC src/mpiExtremeHPC.c src/tgaUtils.c src/spatialFilterUtils.c src/proprtiesFileUtils.c  src/imageProcessingUtils.c src/timingUtils.c -I.
+mpiExtremeHPC: src/mpiExtremeHPC.c src/tgaUtils.c src/spatialFilterUtils.c src/proprtiesFileUtils.c src/imageProcessingUtils.c src/timingUtils.c src/mpiUtils.c
+	mpicc -O3 -fopenmp -o mpiExtremeHPC src/mpiExtremeHPC.c src/tgaUtils.c src/spatialFilterUtils.c src/proprtiesFileUtils.c  src/imageProcessingUtils.c src/timingUtils.c  src/mpiUtils.c -I.
 
 clean:
 	rm mainExtremeHPC.o mainExtremeHPC.exe
