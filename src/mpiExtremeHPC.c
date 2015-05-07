@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 
 	omp_set_num_threads(3);
 
-	defineMpiDataTypes();
+	mpiDefineMpiDataTypes();
 
 	if (mpiRank == MPI_ROOT_NODE)
 	{
@@ -131,6 +131,9 @@ int main(int argc, char **argv)
 			mpiPrintSpatialFilter(spatialFilter, mpiRank);
 		}
 
+		double processingStartTime, processingEndTime;
+		processingStartTime = MPI_Wtime();
+
 		ImageStr* imageStr = createImageStrFromTgaImageForSpatialFilter(tgaImage, spatialFilter);
 		if (!imageStr) {
 			printf("ERROR:(%d): Exiting program.\n", mpiRank);
@@ -139,9 +142,16 @@ int main(int argc, char **argv)
 		cleanUpTgaImage(tgaImage);
 
 		mpiSendSpatialFilter(spatialFilter, MPI_ROOT_NODE);
+		//MPI_Barrier(MPI_COMM_WORLD);
 
 		// Sub-divide imageStr and send sub data arrays to processors.
-		ImageStr* subImageStr = subDivideAndSendImageStr(imageStr, mpiNumOfProcessors, MPI_ROOT_NODE, mpiRank, isLog);
+		ImageStr* subImageStr = mpiSubDivideAndSendImageStr(imageStr, mpiNumOfProcessors, MPI_ROOT_NODE, mpiRank, isLog);
+		// Since we already have a copy of the entire image structure on the
+		// master node, there is not need to copy the data into a new sub image
+		// structure. As along as we the details for the sub image, simply
+		// process that sub section on the original data.
+
+		//MPI_Barrier(MPI_COMM_WORLD);
 
 		// Each processor processes its' sub data array.
 
@@ -156,14 +166,17 @@ int main(int argc, char **argv)
 		}
 
 		addTrackingPoint(timeTracker, "AppInit");
-
 		addTrackingPoint(timeTracker, "AppProcessStart");
 
-		//#pragma omp parallel
-		//{
-		//	int componentID = omp_get_thread_num();
-		//	applySpatialFilterToImageStrComponentArray(spatialFilter, imageStr, processedImageStr, componentID);
-		//}
+		#pragma omp parallel
+		{
+			int componentID = omp_get_thread_num();
+			//applySpatialFilterToImageStrComponentArray(spatialFilter, imageStr, processedImageStr, componentID);
+			applySpatialFilterToSubImageStrComponentArray(spatialFilter, imageStr, processedImageStr, subImageStr, componentID);
+		}
+
+		processingEndTime = MPI_Wtime();
+		printf("INFO(%d): Processing time is %d\n", mpiRank, processingEndTime - processingStartTime);
 
 		addTrackingPoint(timeTracker, "AppProcessEnd");
 
@@ -212,20 +225,36 @@ int main(int argc, char **argv)
 
 		SpatialFilter* spatialFilter = mpiReceiveSpatialFilter(MPI_ROOT_NODE, mpiRank, isLog);
 
-		free(spatialFilter);
-	}
+		// Barrier at the point where the spatial filter information
+		// has been sent to the processors.
+		//MPI_Barrier(MPI_COMM_WORLD);
 
-	// Barrier at the point where the spatial filter information
-	// has been sent to the processors.
-	MPI_Barrier(MPI_COMM_WORLD);
+		ImageStr* subImageStr = mpiReceiveSubDivideImageStr(MPI_ROOT_NODE, mpiRank, isLog);
+
+		ImageStr* processedImageStr = createImageStr(subImageStr);
+		if (!processedImageStr) {
+			printf("ERROR:(%d): Exiting program.\n", mpiRank);
+			return FAIL;
+		}
+
+		#pragma omp parallel
+		{
+			int componentID = omp_get_thread_num();
+			applySpatialFilterToImageStrComponentArray(spatialFilter, subImageStr, processedImageStr, componentID);
+		}
+
+		//MPI_Barrier(MPI_COMM_WORLD);
+
+		free(spatialFilter);
+		free(subImageStr);
+	}
 
 	if (mpiRank == MPI_ROOT_NODE){
 		printf("INFO:(%d): Exiting Program: %d\n", mpiRank, SUCCESS);
 	}
 
 	// Free derived MPI data type.
-	defineMpiDataTypes();
-	//MPI_Type_free(&mpiSpatialFilterType);
+	mpiDefineMpiDataTypes();
 	// Shutdown MPI
 	MPI_Finalize();
 

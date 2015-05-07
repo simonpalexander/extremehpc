@@ -25,6 +25,7 @@ typedef struct image_structure	{
 	int height;
 	int columnExtend;
 	int rowExtend;
+	int startRowIndex;
 	float *redDataArray;
 	float *greenDataArray;
 	float *blueDataArray; } ImageStr;
@@ -34,6 +35,7 @@ ImageStr* createImageStr(ImageStr* imageStr);
 TgaImage* createTgaImageFromImageStr(ImageStr* imageStr);
 void printImageStrDataValues(ImageStr* imageStr);
 int applySpatialFilterToImageStrComponentArray(SpatialFilter* spatialFilter, ImageStr* imageStr, ImageStr* processedImageStr, int component);
+int applySpatialFilterToSubImageStrComponentArray(SpatialFilter* spatialFilter, ImageStr* imageStr, ImageStr* processedImageStr, ImageStr* subImageStr, int component);
 void setComponentValues(ImageStr* imageStr, int dataArrayIndex, int dataArrayValue);
 void cleanUpImageStr(ImageStr* imageStr);
 

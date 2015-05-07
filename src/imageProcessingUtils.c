@@ -263,6 +263,71 @@ int applySpatialFilterToImageStrComponentArray(SpatialFilter* spatialFilter, Ima
 
 //-----------------------------------------------------------------------------
 
+
+int applySpatialFilterToSubImageStrComponentArray(SpatialFilter* spatialFilter, ImageStr* imageStr, ImageStr* processedImageStr, ImageStr* subImageStr, int component)
+{
+	int rowIndex, columnIndex;
+	int dataArrayIndex;
+
+	int rowEndIndex = subImageStr->startRowIndex + subImageStr->height - subImageStr->rowExtend;
+	int columnEndIndex = subImageStr->width - subImageStr->columnExtend;
+
+	printf("Row Start Index %d : Row End Index %d\n", subImageStr->startRowIndex, rowEndIndex);
+
+	int filterRange = spatialFilter->requiredImageEdgeExtend;
+	int filterColumnIndex, filterRowIndex;
+	float* filterElementPtr;
+	float elementValue;
+
+	float* arrayPtr;
+	float* processedArrayPtr;
+	if (isRed(component))
+	{
+		arrayPtr = imageStr->redDataArray;
+		processedArrayPtr = processedImageStr->redDataArray;
+	}
+	else if (isGreen(component))
+	{
+		arrayPtr = imageStr->greenDataArray;
+		processedArrayPtr = processedImageStr->greenDataArray;
+	}
+	else if (isBlue(component))
+	{
+		arrayPtr = imageStr->blueDataArray;
+		processedArrayPtr = processedImageStr->blueDataArray;
+	}
+
+	float componentSum = 0.0f;
+
+	for (rowIndex=subImageStr->startRowIndex ; rowIndex<=rowEndIndex ; rowIndex++)
+	{
+		for (columnIndex=subImageStr->columnExtend ; columnIndex<columnEndIndex ; columnIndex++)
+		{
+			filterElementPtr = spatialFilter->filter;
+			componentSum = 0.0f;
+
+			for (filterRowIndex=-filterRange ; filterRowIndex<=filterRange ; filterRowIndex++)
+			{
+				for (filterColumnIndex=-filterRange ; filterColumnIndex<=filterRange ; filterColumnIndex++)
+				{
+					dataArrayIndex = (rowIndex + filterRowIndex) * imageStr->width + (columnIndex + filterColumnIndex);
+					// Spatial Filter element: (filterColumnIndex, filterRowIndex)
+					elementValue = *(arrayPtr + dataArrayIndex);
+					componentSum += (*filterElementPtr) * elementValue;
+					filterElementPtr++;
+				}
+			}
+
+			dataArrayIndex = rowIndex * imageStr->width + columnIndex;
+			*(processedArrayPtr + dataArrayIndex) = spatialFilter->scalar * componentSum;
+		}
+	}
+
+	return SUCCESS;
+}
+
+//-----------------------------------------------------------------------------
+
 TgaImage* createTgaImageFromImageStr(ImageStr* imageStr)
 {
 	printf("Creating TgaImage from ImageStr\n");
