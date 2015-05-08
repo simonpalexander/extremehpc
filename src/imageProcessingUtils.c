@@ -11,11 +11,16 @@
 #include "globalDefines.h"
 #include "imageProcessingUtils.h"
 
+extern int isLog;
+
 ImageStr* createImageStrFromTgaImageForSpatialFilter(TgaImage* tgaImage, SpatialFilter* spatialFilter)
 {
-	printf("Create image structure from TGA image.\n");
-	printf("Row edges extended by %d top and bottom.\n", spatialFilter->requiredImageEdgeExtend);
-	printf("Column Edges extended by %d left and right.\n", spatialFilter->requiredImageEdgeExtend);
+	if (isLog)
+	{
+		printf("Create image structure from TGA image.\n");
+		printf("Row edges extended by %d top and bottom.\n", spatialFilter->requiredImageEdgeExtend);
+		printf("Column Edges extended by %d left and right.\n", spatialFilter->requiredImageEdgeExtend);
+	}
 
 	ImageStr* imageStr = (ImageStr*) malloc(sizeof(ImageStr));
 
@@ -134,7 +139,7 @@ ImageStr* createImageStrFromTgaImageForSpatialFilter(TgaImage* tgaImage, Spatial
 		}
 	}
 
-	printf("Created image structure.\n");
+	if (isLog) { printf("Created image structure.\n"); }
 
 	return imageStr;
 }
@@ -156,7 +161,10 @@ void setComponentValues(ImageStr* imageStr, int dataArrayIndex, int dataArrayVal
 
 ImageStr* createImageStr(ImageStr* imageStr)
 {
-	printf("Create image structure from image structure.\n");
+	if (isLog)
+	{
+		printf("Create image structure from image structure.\n");
+	}
 
 	ImageStr* newImageStr = (ImageStr*) malloc(sizeof(ImageStr));
 
@@ -200,7 +208,7 @@ void printImageStrDataValues(ImageStr* imageStr)
 
 int applySpatialFilterToImageStrComponentArray(SpatialFilter* spatialFilter, ImageStr* imageStr, ImageStr* processedImageStr, int component)
 {
-	printf("Applying spatial filter to image array. Component %d\n", component);
+	if (isLog) { printf("Applying spatial filter to image array. Component %d\n", component); }
 
 	int rowIndex, columnIndex;
 	int dataArrayIndex;
@@ -257,13 +265,17 @@ int applySpatialFilterToImageStrComponentArray(SpatialFilter* spatialFilter, Ima
 		}
 	}
 
-	printf("Spatial filter applied.\n");
+	if (isLog) { printf("Spatial filter applied.\n"); }
+
 	return SUCCESS;
 }
 
 //-----------------------------------------------------------------------------
 
-
+// Since we already have a copy of the entire image structure on the
+// master node, there is no need to copy the data into a new sub image
+// structure. As along as we the details for the sub image, simply
+// process that sub section on the original data.
 int applySpatialFilterToSubImageStrComponentArray(SpatialFilter* spatialFilter, ImageStr* imageStr, ImageStr* processedImageStr, ImageStr* subImageStr, int component)
 {
 	int rowIndex, columnIndex;
@@ -272,7 +284,7 @@ int applySpatialFilterToSubImageStrComponentArray(SpatialFilter* spatialFilter, 
 	int rowEndIndex = subImageStr->startRowIndex + subImageStr->height - subImageStr->rowExtend;
 	int columnEndIndex = subImageStr->width - subImageStr->columnExtend;
 
-	printf("Row Start Index %d : Row End Index %d\n", subImageStr->startRowIndex, rowEndIndex);
+	if (isLog) { printf("Row Start Index %d : Row End Index %d\n", subImageStr->startRowIndex, rowEndIndex); }
 
 	int filterRange = spatialFilter->requiredImageEdgeExtend;
 	int filterColumnIndex, filterRowIndex;
@@ -330,7 +342,7 @@ int applySpatialFilterToSubImageStrComponentArray(SpatialFilter* spatialFilter, 
 
 TgaImage* createTgaImageFromImageStr(ImageStr* imageStr)
 {
-	printf("Creating TgaImage from ImageStr\n");
+	if (isLog) { printf("Creating TgaImage from ImageStr\n"); }
 
 	int tgaImageWidth = imageStr->width - (2 * imageStr->rowExtend);
 	int tgaImageHeight = imageStr->height - (2 * imageStr->columnExtend);
@@ -389,7 +401,7 @@ TgaImage* createTgaImageFromImageStr(ImageStr* imageStr)
 		}
 	}
 
-	printf("Created TgaImage.\n");
+	if (isLog) { printf("Created TgaImage.\n"); }
 
 	return newTgaImage;
 }

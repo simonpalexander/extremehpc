@@ -11,6 +11,8 @@
 #include "globalDefines.h"
 #include "tgaUtils.h"
 
+extern int isLog;
+
 void tgaImageProperties(TgaImage* tgaImage)
 {
 	printf("- - - - - - - - - - - - - - - - - - -\n");
@@ -53,7 +55,7 @@ void tgaImageProperties(TgaImage* tgaImage)
 
 TgaImage* readTGAFile(char* filename)
 {
-	printf("\nOpening TGA image file: %s\n", filename);
+	if (isLog) { printf("\nOpening TGA image file: %s\n", filename); }
 
 	TgaImage* tgaImage = (TgaImage*) malloc(sizeof(TgaImage));
 
@@ -78,16 +80,16 @@ TgaImage* readTGAFile(char* filename)
 	tgaImageProperties(tgaImage);
 
 	int totalNumberOfBytes = tgaImage->pixelSize * tgaImage->numOfPixels;
-	printf("Total number of Bytes: %d\n", totalNumberOfBytes);
+	if (isLog) { printf("Total number of Bytes: %d\n", totalNumberOfBytes); }
 
-	printf("Reading TGA image data.\n");
+	if (isLog) { printf("Reading TGA image data.\n"); }
 	unsigned char* imageDataBuffer = (unsigned char*) malloc(totalNumberOfBytes * sizeof(unsigned char));
 	fread(imageDataBuffer, totalNumberOfBytes, 1, filePtr);
-	printf("TGA image data read.\n");
+	if (isLog) { printf("TGA image data read.\n"); }
 
 	fclose(filePtr);
 
-	printf("Unpacking Image Data.\n");
+	if (isLog) { printf("Unpacking Image Data.\n"); }
 
 	tgaImage->imageData = (int*) malloc(tgaImage->numOfPixels * sizeof(int));
 
@@ -110,11 +112,11 @@ TgaImage* readTGAFile(char* filename)
 		*imageDataPixelPtr = ((int) redComponent) + ((int)(greenComponent) << 8) + ((int)(blueComponent) << 16);
 		imageDataPixelPtr++;
 	}
-	printf("Unpacked Image Data.\n");
+	if (isLog) { printf("Unpacked Image Data.\n"); }
 
 	free(imageDataBuffer);
 
-	printf("TFA image file read.\n");
+	if (isLog) { printf("TFA image file read.\n"); }
 	return(tgaImage);
 }
 
@@ -122,7 +124,7 @@ TgaImage* readTGAFile(char* filename)
 
 int saveTGAImage(char* filename, TgaImage* tgaImage)
 {
-	printf("\nSaving TGA image file: %s\n", filename);
+	printf("Saving TGA image file: %s\n", filename);
 
 	printf("General:\n");
 	printf("\tWidth: %d\n", tgaImage->width);
@@ -130,7 +132,7 @@ int saveTGAImage(char* filename, TgaImage* tgaImage)
 	printf("\tNum of Pixels: %d:\n", tgaImage->numOfPixels);
 	printf("\tBytes per Pixel: %d\n", tgaImage->pixelSize);
 
-	printf("Defining header info:\n");
+	if (isLog) { printf("Defining header info:\n"); }
 
 	//- - - - - - - - - - - - - - - - - - - - - - - - - - -
 	// Assuming TGA Image DATA TYPE 2: Unmapped RGB images.
@@ -142,7 +144,6 @@ int saveTGAImage(char* filename, TgaImage* tgaImage)
 	// Color Map Type.
 	// 0 means no color map  is included.
 	tgaImage->header[1] = 0;
-
 	tgaImage->header[2] = 2;
 
 	tgaImage->header[12] = tgaImage->width;
@@ -154,15 +155,18 @@ int saveTGAImage(char* filename, TgaImage* tgaImage)
 	// Number of bits in a pixel. This is 24 for Targa 24.
 	tgaImage->header[16] = tgaImage->pixelSize * 8;
 
-	printf("Number of Characters in Identification Field: %d\n", tgaImage->header[0]);
-	printf("Colour Map Type: %d\n", tgaImage->header[1]);
-	printf("Image Type Code: %d\n", tgaImage->header[2]);
-	printf("Image Specification:\n");
-	printf("\tWidth of Image: (lo-hi) %d %d\n", tgaImage->header[12],tgaImage->header[13]);
-	printf("\tHeight of Image: (lo-hi) %d %d\n", tgaImage->header[14],tgaImage->header[15]);
-	printf("Image Pixel Size: %d\n", tgaImage->header[16]);
+	if (isLog)
+	{
+		printf("Number of Characters in Identification Field: %d\n", tgaImage->header[0]);
+		printf("Colour Map Type: %d\n", tgaImage->header[1]);
+		printf("Image Type Code: %d\n", tgaImage->header[2]);
+		printf("Image Specification:\n");
+		printf("\tWidth of Image: (lo-hi) %d %d\n", tgaImage->header[12],tgaImage->header[13]);
+		printf("\tHeight of Image: (lo-hi) %d %d\n", tgaImage->header[14],tgaImage->header[15]);
+		printf("Image Pixel Size: %d\n", tgaImage->header[16]);
+	}
 
-	printf("Packing Image Data.\n");
+	if (isLog) { printf("Packing Image Data.\n"); }
 
 	int totalNumberOfBytes = tgaImage->pixelSize * tgaImage->numOfPixels;
 	unsigned char* imageDataBuffer = (unsigned char*) malloc(totalNumberOfBytes * sizeof(unsigned char));
@@ -188,7 +192,7 @@ int saveTGAImage(char* filename, TgaImage* tgaImage)
 		imageDataPixelPtr++;
 	}
 
-	printf("Packed Image Data.\n");
+	if (isLog) { printf("Packed Image Data.\n"); }
 
 	FILE *filePtr = fopen(filename, "wb");
 	if (!filePtr)

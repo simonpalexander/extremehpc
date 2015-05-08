@@ -14,7 +14,10 @@
 
 #include "mpi.h"
 
-const int mpiTag = 2;
+const int mpiTagRed = 0;
+const int mpiTagGreen = 1;
+const int mpiTagBlue = 2;
+const int mpiTagBase = 3;
 
 MPI_Datatype mpiSpatialFilterType;
 MPI_Datatype mpiImageStrType;
@@ -130,6 +133,10 @@ ImageStr* mpiSubDivideAndSendImageStr(ImageStr* imageStr, int numOfProcessors, i
 		printf("INFO:(%d): SubDivide: %f\n", mpiRank, ((float)(imageStr->height - (2 * imageStr->rowExtend)) / ((float)numOfProcessors)));
 	}
 
+	startRowIndexArray = (int*) malloc(numOfProcessors * sizeof(int));
+	startElementArray = (int*) malloc(numOfProcessors * sizeof(int));
+	numOfElementsArray = (int*) malloc(numOfProcessors * sizeof(int));
+
 	int sectionRowThickness = (int) ceil(((float)(imageStr->height - (2 * imageStr->rowExtend)) / ((float)numOfProcessors)));
 	int finalSectionRowThickness = (imageStr->height - (2 * imageStr->rowExtend)) - (sectionRowThickness * (numOfProcessors - 1) );
 	int sectionRowThicknessWithExtend = sectionRowThickness + (2 * imageStr->rowExtend);
@@ -167,6 +174,10 @@ ImageStr* mpiSubDivideAndSendImageStr(ImageStr* imageStr, int numOfProcessors, i
 		toElement = startElement + (sectionRowThicknessWithExtend * imageStr->width) - 1;
 		numOfElements = sectionRowThicknessWithExtend * imageStr->width;
 
+		startRowIndexArray[processorIndex] = startRowIndex;
+		startElementArray[processorIndex] = startElement;
+		numOfElementsArray[processorIndex] = numOfElements;
+
 		subImageStr->height = sectionRowThickness + (2 * subImageStr->rowExtend);
 		subImageStr->startRowIndex = startRowIndex;
 
@@ -181,10 +192,10 @@ ImageStr* mpiSubDivideAndSendImageStr(ImageStr* imageStr, int numOfProcessors, i
 		if (processorIndex != srcNode)
 		{
 			printf("INFO:(%d): Sending %d elements to %d\n", mpiRank, numOfElements, processorIndex);
-			MPI_Send(subImageStr, 1, mpiImageStrType, processorIndex, mpiTag, MPI_COMM_WORLD);
-			MPI_Send(&(imageStr->redDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTag, MPI_COMM_WORLD);
-			MPI_Send(&(imageStr->greenDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTag, MPI_COMM_WORLD);
-			MPI_Send(&(imageStr->blueDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTag, MPI_COMM_WORLD);
+			MPI_Send(subImageStr, 1, mpiImageStrType, processorIndex, mpiTagBase, MPI_COMM_WORLD);
+			MPI_Send(&(imageStr->redDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagRed, MPI_COMM_WORLD);
+			MPI_Send(&(imageStr->greenDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagGreen, MPI_COMM_WORLD);
+			MPI_Send(&(imageStr->blueDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagBlue, MPI_COMM_WORLD);
 		}
 		else
 		{
@@ -201,6 +212,10 @@ ImageStr* mpiSubDivideAndSendImageStr(ImageStr* imageStr, int numOfProcessors, i
 	toElement = startElement + (finalSectionRowThicknessWithExtend * imageStr->width) - 1;
 	numOfElements = finalSectionRowThicknessWithExtend * imageStr->width;
 
+	startRowIndexArray[processorIndex] = startRowIndex;
+	startElementArray[processorIndex] = startElement;
+	numOfElementsArray[processorIndex] = numOfElements;
+
 	subImageStr->height = finalSectionRowThickness + (2 * subImageStr->rowExtend);
 	subImageStr->startRowIndex = startRowIndex;
 
@@ -214,10 +229,10 @@ ImageStr* mpiSubDivideAndSendImageStr(ImageStr* imageStr, int numOfProcessors, i
 	if (processorIndex != srcNode)
 	{
 		printf("INFO:(%d): Sending %d elements to %d\n", mpiRank, numOfElements, processorIndex);
-		MPI_Send(subImageStr, 1, mpiImageStrType, processorIndex, mpiTag, MPI_COMM_WORLD);
-		MPI_Send(&(imageStr->redDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTag, MPI_COMM_WORLD);
-		MPI_Send(&(imageStr->greenDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTag, MPI_COMM_WORLD);
-		MPI_Send(&(imageStr->blueDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTag, MPI_COMM_WORLD);
+		MPI_Send(subImageStr, 1, mpiImageStrType, processorIndex, mpiTagBase, MPI_COMM_WORLD);
+		MPI_Send(&(imageStr->redDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagRed, MPI_COMM_WORLD);
+		MPI_Send(&(imageStr->greenDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagGreen, MPI_COMM_WORLD);
+		MPI_Send(&(imageStr->blueDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagBlue, MPI_COMM_WORLD);
 	}
 	else
 	{
@@ -231,12 +246,12 @@ ImageStr* mpiSubDivideAndSendImageStr(ImageStr* imageStr, int numOfProcessors, i
 
 //-----------------------------------------------------------------------------
 
-ImageStr* mpiReceiveSubDivideImageStr(int srcNode, int mpiRank, int isLog)
+ImageStr* mpiReceiveSubDividedImageStr(int srcNode, int mpiRank, int isLog)
 {
 	MPI_Status* status;
 	ImageStr* subImageStr = (ImageStr*) malloc(sizeof(ImageStr));
 
-	MPI_Recv(subImageStr, 1, mpiImageStrType, srcNode, mpiTag, MPI_COMM_WORLD, status);
+	MPI_Recv(subImageStr, 1, mpiImageStrType, srcNode, mpiTagBase, MPI_COMM_WORLD, status);
 
 	if (isLog)
 	{
@@ -253,13 +268,91 @@ ImageStr* mpiReceiveSubDivideImageStr(int srcNode, int mpiRank, int isLog)
 	subImageStr->greenDataArray = (float*) malloc(numOfElements * sizeof(float));
 	subImageStr->blueDataArray = (float*) malloc(numOfElements * sizeof(float));
 
-	printf("INFO:(%d): Receiving %d elements\n", mpiRank, numOfElements);
+	if (isLog)
+	{
+		printf("INFO:(%d): Receiving %d elements\n", mpiRank, numOfElements);
+	}
 	// Receive the three data arrays.
-	MPI_Recv(subImageStr->redDataArray, numOfElements, MPI_FLOAT, srcNode, mpiTag, MPI_COMM_WORLD, status);
-	MPI_Recv(subImageStr->greenDataArray, numOfElements, MPI_FLOAT, srcNode, mpiTag, MPI_COMM_WORLD, status);
-	MPI_Recv(subImageStr->blueDataArray, numOfElements, MPI_FLOAT, srcNode, mpiTag, MPI_COMM_WORLD, status);
+	MPI_Recv(subImageStr->redDataArray, numOfElements, MPI_FLOAT, srcNode, mpiTagRed, MPI_COMM_WORLD, status);
+	MPI_Recv(subImageStr->greenDataArray, numOfElements, MPI_FLOAT, srcNode, mpiTagGreen, MPI_COMM_WORLD, status);
+	MPI_Recv(subImageStr->blueDataArray, numOfElements, MPI_FLOAT, srcNode, mpiTagBlue, MPI_COMM_WORLD, status);
 
 	return subImageStr;
+}
+
+//-----------------------------------------------------------------------------
+
+int mpiSendSubDividedImageStr(ImageStr* processedSubImageStr, int srcNode, int mpiRank, int isLog)
+{
+	if (isLog)
+	{
+		printf("INFO:(%d): Sending processed data back.\n", mpiRank);
+	}
+
+	int startRow = processedSubImageStr->rowExtend;
+	int numOfElements = (processedSubImageStr->height - (2 * processedSubImageStr->rowExtend)) * processedSubImageStr->width;
+	int startElement = startRow * processedSubImageStr->width;
+
+	if (isLog)
+	{
+		printf("INFO:(%d): StartRow %d : StartElement %d: Sending %d elements to %d\n", mpiRank, startRow, startElement, numOfElements, srcNode);
+	}
+
+	MPI_Request request[3];
+	MPI_Status status[3];
+
+	// Send the three data arrays.
+	MPI_Isend(&(processedSubImageStr->redDataArray[startElement]), numOfElements, MPI_FLOAT, srcNode, mpiTagRed, MPI_COMM_WORLD, &request[0]);
+	MPI_Isend(&(processedSubImageStr->greenDataArray[startElement]), numOfElements, MPI_FLOAT, srcNode, mpiTagGreen, MPI_COMM_WORLD, &request[1]);
+	MPI_Isend(&(processedSubImageStr->blueDataArray[startElement]), numOfElements, MPI_FLOAT, srcNode, mpiTagBlue, MPI_COMM_WORLD, &request[2]);
+
+	MPI_Waitall(3, request, status);
+
+	return SUCCESS;
+}
+
+//-----------------------------------------------------------------------------
+
+int mpiReceiveAllSubDividedImageStr(ImageStr* imageStr, int numOfProcessors, int srcNode, int mpiRank, int isLog)
+{
+	int startRowIndex, startElement, numOfElements;
+
+	MPI_Status* status = (MPI_Status*) malloc(3 * (numOfProcessors -1) * sizeof(MPI_Status));
+	MPI_Request* request = (MPI_Request*) malloc(3 * (numOfProcessors -1) * sizeof(MPI_Request));
+	int requestIndex = 0;
+
+	int processorIndex;
+	for (processorIndex = 0 ; processorIndex < numOfProcessors ; processorIndex++)
+	{
+		if (processorIndex != srcNode)
+		{
+			startRowIndex = startRowIndexArray[processorIndex];
+			startElement = startElementArray[processorIndex];
+			numOfElements = numOfElementsArray[processorIndex];
+
+			if (isLog)
+			{
+				printf("INFO:(%d): ReceiveSubDivide: Processor: %d\n", mpiRank, processorIndex);
+				printf("INFO:(%d): ReceiveSubDivide: startRowIndex: %d : startElement %d : numOfElements %d\n", mpiRank, startRowIndex, startElement, numOfElements);
+				printf("INFO:(%d): Sending %d elements to %d\n", mpiRank, numOfElements, processorIndex);
+			}
+
+			MPI_Irecv(&(imageStr->redDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagRed, MPI_COMM_WORLD, &request[requestIndex]);
+			requestIndex++;
+			MPI_Irecv(&(imageStr->greenDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagGreen, MPI_COMM_WORLD, &request[requestIndex]);
+			requestIndex++;
+			MPI_Irecv(&(imageStr->blueDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagBlue, MPI_COMM_WORLD, &request[requestIndex]);
+			requestIndex++;
+		}
+	}
+
+	MPI_Waitall(3 * (numOfProcessors - 1), request, status);
+
+	free(startRowIndexArray);
+	free(startElementArray);
+	free(numOfElementsArray);
+
+	return SUCCESS;
 }
 
 //-----------------------------------------------------------------------------

@@ -10,6 +10,8 @@
 #include "globalDefines.h"
 #include "spatialFilterUtils.h"
 
+extern int isLog;
+
 SpatialFilter* createSpatialFilter(int size, float scalar, float* numArray)
 {
 	SpatialFilter* spatialFilter = (SpatialFilter*) malloc(sizeof(SpatialFilter));

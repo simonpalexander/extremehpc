@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 
 	if (mpiRank == MPI_ROOT_NODE)
 	{
-		printf("INFO:(%d): Starting MPI Extreme HPC Project Program:\n", mpiRank);
+		printf("INFO:(%d): Starting MPI Extreme HPC Project Program: NumOfProcessors: %d\n", mpiRank, mpiNumOfProcessors);
 
 		char numThreadsStr[4];
 		int numOfThreads;
@@ -98,8 +98,8 @@ int main(int argc, char **argv)
 			}
 		}
 
-		TimeTracker* timeTracker = createTimeTracker("TT1");
-		addTrackingPoint(timeTracker, "AppStart");
+		TimeTracker* timeTracker = createTimeTracker("TimeTracker");
+		addTrackingPoint(timeTracker, "Started");
 
 		char filenameBase[256];
 		time_t now = time(NULL);
@@ -131,9 +131,6 @@ int main(int argc, char **argv)
 			mpiPrintSpatialFilter(spatialFilter, mpiRank);
 		}
 
-		double processingStartTime, processingEndTime;
-		processingStartTime = MPI_Wtime();
-
 		ImageStr* imageStr = createImageStrFromTgaImageForSpatialFilter(tgaImage, spatialFilter);
 		if (!imageStr) {
 			printf("ERROR:(%d): Exiting program.\n", mpiRank);
@@ -142,22 +139,6 @@ int main(int argc, char **argv)
 		cleanUpTgaImage(tgaImage);
 
 		mpiSendSpatialFilter(spatialFilter, MPI_ROOT_NODE);
-		//MPI_Barrier(MPI_COMM_WORLD);
-
-		// Sub-divide imageStr and send sub data arrays to processors.
-		ImageStr* subImageStr = mpiSubDivideAndSendImageStr(imageStr, mpiNumOfProcessors, MPI_ROOT_NODE, mpiRank, isLog);
-		// Since we already have a copy of the entire image structure on the
-		// master node, there is not need to copy the data into a new sub image
-		// structure. As along as we the details for the sub image, simply
-		// process that sub section on the original data.
-
-		//MPI_Barrier(MPI_COMM_WORLD);
-
-		// Each processor processes its' sub data array.
-
-		// Each processor sends back its processed sub data array.
-
-		// A single processed data array is arranged on the root node.
 
 		ImageStr* processedImageStr = createImageStr(imageStr);
 		if (!processedImageStr) {
@@ -165,24 +146,36 @@ int main(int argc, char **argv)
 			return FAIL;
 		}
 
-		addTrackingPoint(timeTracker, "AppInit");
-		addTrackingPoint(timeTracker, "AppProcessStart");
+		printf("INFO(%d): Starting Image Processing.\n", mpiRank);
+		addTrackingPoint(timeTracker, "Initialized");
+
+		TimeTracker* timeTracker2 = createTimeTracker("TimeTracker2");
+		addTrackingPoint(timeTracker2, "Start Processing");
+
+		// Sub-divide imageStr and send sub data arrays to processors.
+		ImageStr* subImageStr = mpiSubDivideAndSendImageStr(imageStr, mpiNumOfProcessors, MPI_ROOT_NODE, mpiRank, isLog);
+
+		printf("INFO(%d): Data Sent.\n", mpiRank);
+		addTrackingPoint(timeTracker, "Sent");
 
 		#pragma omp parallel
 		{
 			int componentID = omp_get_thread_num();
-			//applySpatialFilterToImageStrComponentArray(spatialFilter, imageStr, processedImageStr, componentID);
 			applySpatialFilterToSubImageStrComponentArray(spatialFilter, imageStr, processedImageStr, subImageStr, componentID);
 		}
 
-		processingEndTime = MPI_Wtime();
-		printf("INFO(%d): Processing time is %d\n", mpiRank, processingEndTime - processingStartTime);
+		addTrackingPoint(timeTracker, "Processed");
 
-		addTrackingPoint(timeTracker, "AppProcessEnd");
+		mpiReceiveAllSubDividedImageStr(processedImageStr, mpiNumOfProcessors, MPI_ROOT_NODE, mpiRank, isLog);
+
+		addTrackingPoint(timeTracker, "Received");
+		printf("INFO(%d): Data Received.\n", mpiRank);
+
+		addTrackingPoint(timeTracker2, "Finished Processing");
+		printf("INFO(%d): Finished Image Processing.\n", mpiRank);
 
 		cleanUpImageStr(imageStr);
 
-		/*
 		TgaImage* processedTgaImage = createTgaImageFromImageStr(processedImageStr);
 		if (!successful(saveTGAImage(outputFilename, processedTgaImage))) {
 			printf("ERROR:(%d): Exiting program.\n", mpiRank);
@@ -191,8 +184,9 @@ int main(int argc, char **argv)
 
 		cleanUpImageStr(processedImageStr);
 
-		addTrackingPoint(timeTracker, "AppEnd");
+		addTrackingPoint(timeTracker, "Finished");
 		printTimeTracker(timeTracker);
+		printTimeTracker(timeTracker2);
 
 		FILE *file = fopen(resultsFilename, "wt");
 		if (file == NULL)
@@ -201,6 +195,7 @@ int main(int argc, char **argv)
 			return FAIL;
 		}
 
+		fprintf(file, "MPI: Num of Processors: %d\n", mpiNumOfProcessors);
 		fprintf(file, "OMP: Num of Threads: %d\n", numOfThreads);
 		fprintf(file, "isLog: %d\n", isLog);
 		fprintf(file, "Input: %s\n", inputFilename);
@@ -209,15 +204,16 @@ int main(int argc, char **argv)
 
 		writeTimeTrackerHeader(file);
 		writeTimeTrackerFile(timeTracker, file);
+		writeTimeTrackerFile(timeTracker2, file);
 
-		fprintf(file, "SpatialFIlter: %s\n", spatialFilterFilename);
+		fprintf(file, "SpatialFilter: %s\n", spatialFilterFilename);
 		writeSpatialFilterToFile(spatialFilter, file);
 		fclose(file);
-		*/
 
-		//cleanUpTgaImage(processedTgaImage);
+		cleanUpTgaImage(processedTgaImage);
 		cleanUpSpatialFilter(spatialFilter);
 		free(timeTracker);
+		free(timeTracker2);
 	}
 	else
 	{
@@ -225,14 +221,10 @@ int main(int argc, char **argv)
 
 		SpatialFilter* spatialFilter = mpiReceiveSpatialFilter(MPI_ROOT_NODE, mpiRank, isLog);
 
-		// Barrier at the point where the spatial filter information
-		// has been sent to the processors.
-		//MPI_Barrier(MPI_COMM_WORLD);
+		ImageStr* subImageStr = mpiReceiveSubDividedImageStr(MPI_ROOT_NODE, mpiRank, isLog);
 
-		ImageStr* subImageStr = mpiReceiveSubDivideImageStr(MPI_ROOT_NODE, mpiRank, isLog);
-
-		ImageStr* processedImageStr = createImageStr(subImageStr);
-		if (!processedImageStr) {
+		ImageStr* processedSubImageStr = createImageStr(subImageStr);
+		if (!processedSubImageStr) {
 			printf("ERROR:(%d): Exiting program.\n", mpiRank);
 			return FAIL;
 		}
@@ -240,13 +232,14 @@ int main(int argc, char **argv)
 		#pragma omp parallel
 		{
 			int componentID = omp_get_thread_num();
-			applySpatialFilterToImageStrComponentArray(spatialFilter, subImageStr, processedImageStr, componentID);
+			applySpatialFilterToImageStrComponentArray(spatialFilter, subImageStr, processedSubImageStr, componentID);
 		}
 
-		//MPI_Barrier(MPI_COMM_WORLD);
+		mpiSendSubDividedImageStr(processedSubImageStr, MPI_ROOT_NODE, mpiRank, isLog);
 
 		free(spatialFilter);
 		free(subImageStr);
+		free(processedSubImageStr);
 	}
 
 	if (mpiRank == MPI_ROOT_NODE){

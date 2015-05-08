@@ -12,9 +12,11 @@
 #include "globalDefines.h"
 #include "proprtiesFileUtils.h"
 
+extern int isLog;
+
 SpatialFilter* readSpatialFilterProprtyFile(char* filename)
 {
-	printf("Reading Spatial Filter property file: %s\n", filename);
+	if (isLog) { printf("Reading Spatial Filter property file: %s\n", filename); }
 
 	FILE* filePtr = fopen(filename, "rt");
 	if (!filePtr)
@@ -51,7 +53,7 @@ SpatialFilter* readSpatialFilterProprtyFile(char* filename)
 
 	printSpatialFilter(spatialFilter);
 
-	printf("Spatial Filter property file read.\n");
+	if (isLog) { printf("Spatial Filter property file read.\n"); }
 
 	return spatialFilter;
 }
