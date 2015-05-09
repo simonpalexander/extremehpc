@@ -152,10 +152,11 @@ int main(int argc, char **argv)
 		TimeTracker* timeTracker2 = createTimeTracker("TimeTracker2");
 		addTrackingPoint(timeTracker2, "Start Processing");
 
+		int totalElementsSent = 0;
 		// Sub-divide imageStr and send sub data arrays to processors.
-		ImageStr* subImageStr = mpiSubDivideAndSendImageStr(imageStr, mpiNumOfProcessors, MPI_ROOT_NODE, mpiRank, isLog);
+		ImageStr* subImageStr = mpiSubDivideAndSendImageStr(imageStr, mpiNumOfProcessors, MPI_ROOT_NODE, &totalElementsSent, mpiRank, isLog);
 
-		printf("INFO(%d): Data Sent.\n", mpiRank);
+		printf("INFO(%d): Data Sent: %d\n", mpiRank, totalElementsSent);
 		addTrackingPoint(timeTracker, "Sent");
 
 		#pragma omp parallel

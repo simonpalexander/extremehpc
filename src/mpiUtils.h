@@ -11,6 +11,10 @@
 #include "spatialFilterUtils.h"
 #include "imageProcessingUtils.h"
 
+typedef struct data_info_structure	{
+	int totalNumberOfElementsSent;
+	int totalNumberOfElementsReceived;} DataInfo;
+
 int* startRowIndexArray;
 int* startElementArray;
 int* numOfElementsArray;
@@ -23,11 +27,11 @@ int mpiReceiveIsLog(int srcNode, int mpiRank);
 int mpiSendSpatialFilter(SpatialFilter* spatialFilter, int srcNode);
 SpatialFilter* mpiReceiveSpatialFilter(int srcNode, int mpiRank, int isLog);
 
-ImageStr* mpiSubDivideAndSendImageStr(ImageStr* imageStr, int numOfProcessors, int srcNode, int mpiRank, int isLog);
+ImageStr* mpiSubDivideAndSendImageStr(ImageStr* imageStr, int numOfProcessors, int srcNode, int mpiRank, DataInfo* dataInfo, int isLog);
 ImageStr* mpiReceiveSubDividedImageStr(int srcNode, int mpiRank, int isLog);
 
 int mpiSendSubDividedImageStr(ImageStr* processedSubImageStr, int srcNode, int mpiRank, int isLog);
-int mpiReceiveAllSubDividedImageStr(ImageStr* imageStr, int numOfProcessors, int srcNode, int mpiRank, int isLog);
+int mpiReceiveAllSubDividedImageStr(ImageStr* imageStr, int numOfProcessors, int srcNode, int mpiRank, DataInfo* dataInfo, int isLog);
 
 void mpiPrintSpatialFilter(SpatialFilter* spatialFilter, int mpiRank);
 

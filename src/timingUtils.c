@@ -105,3 +105,16 @@ void writeTimeTrackerFile(TimeTracker* timeTracker, FILE* file)
 		fprintf(file, "%d) %s: %f\n", index, timeTracker->trackerPointLabel[index], timeTracker->interval[index]);
 	}
 }
+
+//-----------------------------------------------------------------------------
+
+void writeTimeTrackerDetailsFile(TimeTracker* timeTracker, FILE* file, int numOfProcessors, int imageHeight, int imageWidth, int sizeOfSF, int other)
+{
+	calculateInterals(timeTracker);
+
+	int index;
+	for (index=0 ; index<timeTracker->lastIndex ; index++)
+	{
+		fprintf(file, "%d,%d,%d,%d,%s,%f,%d\n", numOfProcessors, sizeOfSF, imageHeight, imageWidth, timeTracker->trackerPointLabel[index], timeTracker->interval[index], other);
+	}
+}

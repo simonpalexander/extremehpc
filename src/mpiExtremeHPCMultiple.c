@@ -89,12 +89,12 @@ int main(int argc, char **argv)
 			"resources/spatialFilter5by5.txt",
 			"resources/spatialFilter7by7.txt",
 			"resources/spatialFilter9by9.txt",
-			"resources/spatialFilter11by11txt",
-			"resources/spatialFilter13by13txt",
-			"resources/spatialFilter15by15txt",
-			"resources/spatialFilter17by17txt",
-			"resources/spatialFilter19by19txt",
-			"resources/spatialFilter21by21txt" };
+			"resources/spatialFilter11by11.txt",
+			"resources/spatialFilter13by13.txt",
+			"resources/spatialFilter15by15.txt",
+			"resources/spatialFilter17by17.txt",
+			"resources/spatialFilter19by19.txt",
+			"resources/spatialFilter21by21.txt" };
 
 	// Initialize MPI
 	// MPI: Rank of process.
@@ -140,8 +140,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	int numOfInputFiles = 11;
-	int numOfSpatialFilterFiles = 10;
+	int numOfInputFiles = 3;
+	int numOfSpatialFilterFiles = 3;
 	printf("INFO: Starting Extreme HPC Project Program:\n");
 	printf("INFO: Results filename: %s\n", resultsFilename);
 
@@ -201,10 +201,14 @@ int main(int argc, char **argv)
 				TimeTracker* timeTracker2 = createTimeTracker("TimeTracker2");
 				addTrackingPoint(timeTracker2, "Start Processing");
 
-				// Sub-divide imageStr and send sub data arrays to processors.
-				ImageStr* subImageStr = mpiSubDivideAndSendImageStr(imageStr, mpiNumOfProcessors, MPI_ROOT_NODE, mpiRank, isLog);
+				DataInfo* dataInfo = (DataInfo*) malloc(sizeof(DataInfo));
+				dataInfo->totalNumberOfElementsSent = 0;
+				dataInfo->totalNumberOfElementsReceived = 0;
 
-				printf("INFO(%d): Data Sent.\n", mpiRank);
+				// Sub-divide imageStr and send sub data arrays to processors.
+				ImageStr* subImageStr = mpiSubDivideAndSendImageStr(imageStr, mpiNumOfProcessors, MPI_ROOT_NODE, mpiRank, dataInfo, isLog);
+
+				printf("INFO(%d): Data Sent: %d\n", mpiRank, dataInfo->totalNumberOfElementsSent);
 				addTrackingPoint(timeTracker, "Sent");
 
 				#pragma omp parallel
@@ -215,10 +219,9 @@ int main(int argc, char **argv)
 
 				addTrackingPoint(timeTracker, "Processed");
 
-				mpiReceiveAllSubDividedImageStr(processedImageStr, mpiNumOfProcessors, MPI_ROOT_NODE, mpiRank, isLog);
-
+				mpiReceiveAllSubDividedImageStr(processedImageStr, mpiNumOfProcessors, MPI_ROOT_NODE, mpiRank, dataInfo, isLog);
+				printf("INFO(%d): Data Received: %d\n", mpiRank, dataInfo->totalNumberOfElementsReceived);
 				addTrackingPoint(timeTracker, "Received");
-				printf("INFO(%d): Data Received.\n", mpiRank);
 
 				addTrackingPoint(timeTracker2, "Finished Processing");
 				printf("INFO(%d): Finished Image Processing.\n", mpiRank);
@@ -237,25 +240,27 @@ int main(int argc, char **argv)
 				printTimeTracker(timeTracker);
 				printTimeTracker(timeTracker2);
 
-				fprintf(file, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
-				fprintf(file, "MPI: Num of Processors: %d\n", mpiNumOfProcessors);
-				fprintf(file, "OMP: Num of Threads: %d\n", numOfThreads);
+				//fprintf(file, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
+				//fprintf(file, "MPI: Num of Processors: %d\n", mpiNumOfProcessors);
+				//fprintf(file, "OMP: Num of Threads: %d\n", numOfThreads);
 				//fprintf(file, "isLog: %d\n", isLog);
-				fprintf(file, "Input: %s\n", inputFilename);
-				fprintf(file, "Output: %s\n", outputFilename);
-				fprintf(file, "Image,%d,%d,%d\n", processedTgaImage->width, processedTgaImage->height,processedTgaImage->numOfPixels);
+				//fprintf(file, "Input: %s\n", inputFilename);
+				//fprintf(file, "Output: %s\n", outputFilename);
+				//fprintf(file, "Image,%d,%d,%d\n", processedTgaImage->width, processedTgaImage->height,processedTgaImage->numOfPixels);
 
-				fprintf(file, "SpatialFilter: %s\n", spatialFilterFilename);
+				//fprintf(file, "SpatialFilter: %s\n", spatialFilterFilename);
 				//writeSpatialFilterToFile(spatialFilter, file);
 
 				//writeTimeTrackerHeader(file);
-				writeTimeTrackerFile(timeTracker, file);
-				writeTimeTrackerFile(timeTracker2, file);
+				//writeTimeTrackerFile(timeTracker, file);
+				//writeTimeTrackerFile(timeTracker2, file);
+				writeTimeTrackerDetailsFile(timeTracker, file, mpiNumOfProcessors, processedTgaImage->height, processedTgaImage->width, spatialFilter->size, dataInfo->totalNumberOfElementsSent);
 
 				cleanUpTgaImage(processedTgaImage);
 				cleanUpSpatialFilter(spatialFilter);
 				free(timeTracker);
 				free(timeTracker2);
+				free(dataInfo);
 			}
 			else
 			{

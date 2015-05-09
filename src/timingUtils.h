@@ -27,6 +27,7 @@ float getInterval(TimeTracker* timeTracker, int intervalIndex);
 void printTimeTracker(TimeTracker* timeTracker);
 
 void writeTimeTrackerFile(TimeTracker* timeTracker, FILE* file);
+void writeTimeTrackerDetailsFile(TimeTracker* timeTracker, FILE* file, int numOfProcessors, int sizeOfSF, int imageHeight, int imageWidth, int other);
 void writeTimeTrackerHeader(FILE* file);
 
 #endif /* SRC_TIMINGUTILS_H_ */

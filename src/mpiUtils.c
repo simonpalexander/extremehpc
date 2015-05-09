@@ -124,7 +124,7 @@ SpatialFilter* mpiReceiveSpatialFilter(int srcNode, int mpiRank, int isLog)
 
 //-----------------------------------------------------------------------------
 
-ImageStr* mpiSubDivideAndSendImageStr(ImageStr* imageStr, int numOfProcessors, int srcNode, int mpiRank, int isLog)
+ImageStr* mpiSubDivideAndSendImageStr(ImageStr* imageStr, int numOfProcessors, int srcNode, int mpiRank, DataInfo* dataInfo, int isLog)
 {
 	// Currently have the assumption that the number of rows in the image
 	// is equal or greater than the number of processors.
@@ -196,6 +196,7 @@ ImageStr* mpiSubDivideAndSendImageStr(ImageStr* imageStr, int numOfProcessors, i
 			MPI_Send(&(imageStr->redDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagRed, MPI_COMM_WORLD);
 			MPI_Send(&(imageStr->greenDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagGreen, MPI_COMM_WORLD);
 			MPI_Send(&(imageStr->blueDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagBlue, MPI_COMM_WORLD);
+			dataInfo->totalNumberOfElementsSent += 3 * numOfElements;
 		}
 		else
 		{
@@ -233,6 +234,7 @@ ImageStr* mpiSubDivideAndSendImageStr(ImageStr* imageStr, int numOfProcessors, i
 		MPI_Send(&(imageStr->redDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagRed, MPI_COMM_WORLD);
 		MPI_Send(&(imageStr->greenDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagGreen, MPI_COMM_WORLD);
 		MPI_Send(&(imageStr->blueDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagBlue, MPI_COMM_WORLD);
+		dataInfo->totalNumberOfElementsSent += 3 * numOfElements;
 	}
 	else
 	{
@@ -313,7 +315,7 @@ int mpiSendSubDividedImageStr(ImageStr* processedSubImageStr, int srcNode, int m
 
 //-----------------------------------------------------------------------------
 
-int mpiReceiveAllSubDividedImageStr(ImageStr* imageStr, int numOfProcessors, int srcNode, int mpiRank, int isLog)
+int mpiReceiveAllSubDividedImageStr(ImageStr* imageStr, int numOfProcessors, int srcNode, int mpiRank, DataInfo* dataInfo, int isLog)
 {
 	int startRowIndex, startElement, numOfElements;
 
@@ -343,6 +345,7 @@ int mpiReceiveAllSubDividedImageStr(ImageStr* imageStr, int numOfProcessors, int
 			requestIndex++;
 			MPI_Irecv(&(imageStr->blueDataArray[startElement]), numOfElements, MPI_FLOAT, processorIndex, mpiTagBlue, MPI_COMM_WORLD, &request[requestIndex]);
 			requestIndex++;
+			dataInfo->totalNumberOfElementsReceived += 3 * numOfElements;
 		}
 	}
 

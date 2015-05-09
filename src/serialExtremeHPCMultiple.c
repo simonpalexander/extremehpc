@@ -67,12 +67,12 @@ int main(int argc, char **argv)
 			"resources/spatialFilter5by5.txt",
 			"resources/spatialFilter7by7.txt",
 			"resources/spatialFilter9by9.txt",
-			"resources/spatialFilter11by11txt",
-			"resources/spatialFilter13by13txt",
-			"resources/spatialFilter15by15txt",
-			"resources/spatialFilter17by17txt",
-			"resources/spatialFilter19by19txt",
-			"resources/spatialFilter21by21txt" };
+			"resources/spatialFilter11by11.txt",
+			"resources/spatialFilter13by13.txt",
+			"resources/spatialFilter15by15.txt",
+			"resources/spatialFilter17by17.txt",
+			"resources/spatialFilter19by19.txt",
+			"resources/spatialFilter21by21.txt" };
 
 	//if (!successful(processComandLineArguments(argc, argv))) {
 	//	printf("ERROR: Exiting program.\n");
@@ -155,18 +155,19 @@ int main(int argc, char **argv)
 			addTrackingPoint(timeTracker, "Finished");
 			printTimeTracker(timeTracker);
 
-			fprintf(file, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
+			//fprintf(file, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
 			//fprintf(file, "isLog: %d\n", isLog);
-			fprintf(file, "Input: %s\n", inputFilename);
-			fprintf(file, "Output: %s\n", outputFilename);
-			fprintf(file, "Image:%d,%d,%d\n", processedTgaImage->width, processedTgaImage->height,processedTgaImage->numOfPixels);
+			//fprintf(file, "Input: %s\n", inputFilename);
+			//fprintf(file, "Output: %s\n", outputFilename);
+			//fprintf(file, "Image:%d,%d,%d\n", processedTgaImage->width, processedTgaImage->height,processedTgaImage->numOfPixels);
 
-			fprintf(file, "SpatialFilter: %s\n", spatialFilterFilename);
+			//fprintf(file, "SpatialFilter: %s\n", spatialFilterFilename);
 			//writeSpatialFilterToFile(spatialFilter, file);
 
 			//writeTimeTrackerHeader(file);
-			fprintf(file, "Time Tracker:\n");
-			writeTimeTrackerFile(timeTracker, file);
+			//fprintf(file, "Time Tracker:\n");
+			//writeTimeTrackerFile(timeTracker, file);
+			writeTimeTrackerDetailsFile(timeTracker, file, 1, processedTgaImage->height, processedTgaImage->width, spatialFilter->size, 0);
 
 			cleanUpTgaImage(processedTgaImage);
 			cleanUpSpatialFilter(spatialFilter);
