@@ -101,6 +101,7 @@ void writeTimeTrackerFile(TimeTracker* timeTracker, FILE* file)
 	int index;
 	for (index=0 ; index<timeTracker->lastIndex ; index++)
 	{
-		fprintf(file, "%s,%s,%d,%d,%f\n", timeTracker->trackerName, timeTracker->trackerPointLabel[index], (int)(timeTracker->trackerPointTiming[index]).tv_sec, (int)(timeTracker->trackerPointTiming[index]).tv_usec, timeTracker->interval[index]);
+		//fprintf(file, "%s,%s,%d,%d,%f\n", timeTracker->trackerName, timeTracker->trackerPointLabel[index], (int)(timeTracker->trackerPointTiming[index]).tv_sec, (int)(timeTracker->trackerPointTiming[index]).tv_usec, timeTracker->interval[index]);
+		fprintf(file, "%d) %s: %f\n", index, timeTracker->trackerPointLabel[index], timeTracker->interval[index]);
 	}
 }

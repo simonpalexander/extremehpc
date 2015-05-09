@@ -1,12 +1,4 @@
 /*
- * ompExtremeHPC.c
- *
- *  Created on: Apr 29, 2015
- *      Author: simon
- */
-
-
-/*
  * mainExtremeHPC.c
  *
  *  Created on: Apr 25, 2015
@@ -15,8 +7,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <omp.h>
 
 #include "globalDefines.h"
 #include "tgaUtils.h"
@@ -40,35 +30,18 @@
 //Done Add timing utilities.
 //Done: Consider strategy where only data array relating to component being processed is malloc-ed minimizing amount of active memory use. My machine only has 8G, other machines will have more, consider if it becomes a problem.
 //Done: Write results to a text file.
-//Done: Basic OMP functionality added to create a thread for each data array.
-//ToDo: Can further OMP optimization be added. On blue waters, each processor has 8/16 cores.
 
 int isLog;
 char* inputFilename = "resources/input.tga";
 char* outputFilename = "resources/output.tga";
 char* spatialFilterFilename = "resources/spatialFilter.txt";
-char* resultsFilename = "omp-extremehpc-results.txt"
+char* resultsFilename = "serial-extremehpc-results.txt";
 
 int processComandLineArguments(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
-	printf("INFO: Starting OMP Extreme HPC Project Program:\n");
-
-	char numThreadsStr[4];
-	int numOfThreads;
-
-	omp_set_num_threads(3);
-	#pragma omp parallel
-	{
-		#pragma omp master
-		{
-			int threadId = omp_get_thread_num();
-			numOfThreads = omp_get_num_threads();
-			printf("INFO: Thread %d: OMP Settings: Num of Threads: %d\n", threadId, numOfThreads);
-			sprintf(numThreadsStr, "%d", numOfThreads);
-		}
-	}
+	printf("INFO: Starting Extreme HPC Project Program:\n");
 
 	TimeTracker* timeTracker = createTimeTracker("TimeTracker");
 	addTrackingPoint(timeTracker, "Started");
@@ -76,7 +49,7 @@ int main(int argc, char **argv)
 	//char filenameBase[256];
 	//time_t now = time(NULL);
 	//struct tm *t = localtime(&now);
-	//strftime(filenameBase, sizeof(filenameBase)-1, "extremehpc-omp-results-%Y%m%d-%H%M", t);
+	//strftime(filenameBase, sizeof(filenameBase)-1, "extremehpc-serial-results-%Y%m%d-%H%M", t);
 	//char resultsFilename[256];
 	//snprintf(resultsFilename, sizeof(resultsFilename), "%s.txt", filenameBase);
 	printf("INFO: Results filename: %s\n", resultsFilename);
@@ -115,14 +88,12 @@ int main(int argc, char **argv)
 	printf("INFO: Starting Image Processing.\n");
 	addTrackingPoint(timeTracker, "Initialized");
 
-	#pragma omp parallel
-	{
-		int componentID = omp_get_thread_num();
-		applySpatialFilterToImageStrComponentArray(spatialFilter, imageStr, processedImageStr, componentID);
-	}
+	applySpatialFilterToImageStrComponentArray(spatialFilter, imageStr, processedImageStr, red);
+	applySpatialFilterToImageStrComponentArray(spatialFilter, imageStr, processedImageStr, green);
+	applySpatialFilterToImageStrComponentArray(spatialFilter, imageStr, processedImageStr, blue);
 
 	addTrackingPoint(timeTracker, "Processed");
-	printf("INFO: Finished Image Processing.\n");
+	printf("INFO: Finished Image Processing..\n");
 
 	cleanUpImageStr(imageStr);
 
@@ -144,7 +115,6 @@ int main(int argc, char **argv)
 		return FAIL;
 	}
 
-	fprintf(file, "OMP: Num of Threads: %d\n", numOfThreads);
 	fprintf(file, "isLog: %d\n", isLog);
 	fprintf(file, "Input: %s\n", inputFilename);
 	fprintf(file, "Output: %s\n", outputFilename);
@@ -188,7 +158,7 @@ int processComandLineArguments(int argc, char **argv)
 		outputFilename = argv[4];
 	}
 	else if (argc>1 && argc > 5) {
-		printf("ERROR: Problem parsing command line arguments:\n");
+		printf("INFO: Problem parsing command line arguments:\n");
 		printf("1) isLog: 0 false : 1 true\n");
 		printf("2) input filename : Default: resources/input.tga:\n");
 		printf("3) spatial filter filename : Default: resources/spatialFilter.txt:\n");

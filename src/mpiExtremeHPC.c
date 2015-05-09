@@ -37,11 +37,11 @@
 //Done: Write results to a text file.
 //Done: Basic OMP functionality added to create a thread for each data array.
 //ToDo: Can further OMP optimization be added. On blue waters, each processor has 8/16 cores.
-//InProgress: Add MPI functionality.
-//InProgress: Consider how data array will be divided up with respect to the number of nodes. Image is already extended w.r.t. spatial filter.
-//InProgress: Consider how when sections of images are sent cross the network, they are 'pre-processed' with the 'extend halo' already accounted for.
+//Done: Add MPI functionality.
+//Done: Consider how data array will be divided up with respect to the number of nodes. Image is already extended w.r.t. spatial filter.
+//Done: Consider how when sections of images are sent cross the network, they are 'pre-processed' with the 'extend halo' already accounted for.
 //Done: Create MPI structure to send spatial filter and other 'extend' image related details.
-//ToDo: Create MPI structure to send data array across network.
+//Done: Create MPI structure to send data array across network.
 //Done: Setup cygwin openmpi environment.
 //Done: Added assumption that image has more rows than number of processors being used.
 
