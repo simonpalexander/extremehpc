@@ -54,29 +54,29 @@ int processComandLineArguments(int argc, char **argv);
 int main(int argc, char **argv)
 {
 	char* inputFilenames[] = {
-			"resources/Orion_Nebula_1000.tga",
-			"resources/Orion_Nebula_2000.tga",
-			"resources/Orion_Nebula_4000.tga",
-			"resources/Orion_Nebula_6000.tga",
-			"resources/Orion_Nebula_8000.tga",
-			"resources/Orion_Nebula_10000.tga",
-			"resources/Orion_Nebula_12000.tga",
-			"resources/Orion_Nebula_14000.tga",
-			"resources/Orion_Nebula_16000.tga",
-			"resources/Orion_Nebula_18000.tga",
-			"resources/Orion_Nebula_20000.tga" };
+			"/project/class05/class0502/resources/Orion_Nebula_1000.tga",
+			"/project/class05/class0502/resources/Orion_Nebula_2000.tga",
+			"/project/class05/class0502/resources/Orion_Nebula_4000.tga",
+			"/project/class05/class0502/resources/Orion_Nebula_6000.tga",
+			"/project/class05/class0502/resources/Orion_Nebula_8000.tga",
+			"/project/class05/class0502/resources/Orion_Nebula_10000.tga",
+			"/project/class05/class0502/resources/Orion_Nebula_12000.tga",
+			"/project/class05/class0502/resources/Orion_Nebula_14000.tga",
+			"/project/class05/class0502/resources/Orion_Nebula_16000.tga",
+			"/project/class05/class0502/resources/Orion_Nebula_18000.tga",
+			"/project/class05/class0502/resources/Orion_Nebula_20000.tga" };
 
 	char* spatialFilterFilenames[] = {
-			"resources/spatialFilter3by3.txt",
-			"resources/spatialFilter5by5.txt",
-			"resources/spatialFilter7by7.txt",
-			"resources/spatialFilter9by9.txt",
-			"resources/spatialFilter11by11.txt",
-			"resources/spatialFilter13by13.txt",
-			"resources/spatialFilter15by15.txt",
-			"resources/spatialFilter17by17.txt",
-			"resources/spatialFilter19by19.txt",
-			"resources/spatialFilter21by21.txt" };
+			"/project/class05/class0502/resources/spatialFilter3by3.txt",
+			"/project/class05/class0502/resources/spatialFilter5by5.txt",
+			"/project/class05/class0502/resources/spatialFilter7by7.txt",
+			"/project/class05/class0502/resources/spatialFilter9by9.txt",
+			"/project/class05/class0502/resources/spatialFilter11by11.txt",
+			"/project/class05/class0502/resources/spatialFilter13by13.txt",
+			"/project/class05/class0502/resources/spatialFilter15by15.txt",
+			"/project/class05/class0502/resources/spatialFilter17by17.txt",
+			"/project/class05/class0502/resources/spatialFilter19by19.txt",
+			"/project/class05/class0502/resources/spatialFilter21by21.txt" };
 
 	//if (!successful(processComandLineArguments(argc, argv))) {
 	//	printf("ERROR: Exiting program.\n");
